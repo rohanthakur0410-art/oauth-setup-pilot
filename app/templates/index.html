@@ -1,41 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero">
-  <h1>Setting up an OAuth app: know before you start</h1>
-  <p>Pick an app below for a ready guide, or submit any app and the agent will investigate its official documentation and generate a guide live, with sources and uncertainties shown.</p>
-</section>
+<h1>OAuth app setup, rated</h1>
+<p class="lede">Registering a provider OAuth app and getting it <em>approved</em> is the hidden cost of "connect an app". Five providers rated below; type any app and the agent investigates its official docs live, citing every claim and flagging what it could not verify.</p>
 
-<section class="explain">
-  <h2>How to read these guides</h2>
-  <p><strong>Two different things are easy to confuse.</strong> When your AI agent needs users to connect an app (say Google Calendar), there are two steps: <strong>(1)</strong> you, the developer, register one <em>provider OAuth app</em> with the provider and, on many providers, get it <em>approved or verified</em>; <strong>(2)</strong> each of your end users then connects their own account through a normal OAuth consent screen. Step 2 is usually quick everywhere. All the real cost lives in step 1 - and it varies wildly: a 10-minute form at GitHub, a weeks-long verification at Google.</p>
-  <p>Each guide answers: <strong>difficulty</strong> (easy = no approval wait, medium = optional or short review, hard = mandatory review/verification with a real wait), <strong>hands-on setup time</strong> vs <strong>approval wait</strong>, the exact registration console, what can block you, what an agent can do for you, and where only you can act (accounts, payments, legal agreements, submitting). Every claim carries its source; anything we could not verify is listed under Uncertainties.</p>
-</section>
-
-<section class="genbox">
-  <h2>Generate a guide for any app</h2>
+<section class="gen">
   <div class="genrow">
-    <input id="q" type="text" placeholder="App name or website, e.g. Figma or https://figma.com" autocomplete="off">
-    <button id="go" onclick="generate()">Investigate</button>
+    <input id="q" type="text" placeholder="investigate figma.com" autocomplete="off">
+    <button id="go" onclick="generate()">run</button>
   </div>
-  <p class="warn">Submit app names or public website URLs only. Never paste a URL or text containing keys, tokens, passwords, or personal data - inputs are sent to a third-party LLM API.</p>
+  <p class="warn">App names or public site URLs only. Never paste keys, tokens, passwords, or personal data - inputs go to a third-party LLM API.</p>
   <div id="status" class="status"></div>
 </section>
 
 <section>
-  <h2>Guide library</h2>
-  <input id="filter" type="text" placeholder="Filter library..." onkeyup="filterGuides()" class="filter">
-  <div class="grid" id="grid">
+  <h2>Library &mdash; rated guides</h2>
+  <input id="filter" type="text" placeholder="filter" onkeyup="filterGuides()" class="filter">
+  <table class="lib" id="grid">
+    <tr><th>app</th><th>rating</th><th>hands-on setup</th><th>approval wait</th></tr>
     {% for g in guides %}
-    <a class="card" href="/guides/{{ g.slug }}">
-      <div class="card-top">
-        <strong>{{ g.app_name }}</strong>
-        <span class="badge {{ g.difficulty }}">{{ g.difficulty }}</span>
-      </div>
-      <div class="card-meta">{{ g.setup_time }} setup &middot; approval: {{ g.approval.wait }}</div>
-      <div class="card-sum">{{ g.summary }}</div>
-    </a>
+    <tr class="row" onclick="window.location='/guides/{{ g.slug }}'">
+      <td class="app"><a href="/guides/{{ g.slug }}">{{ g.app_name }}</a></td>
+      <td><span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span></td>
+      <td class="meta">{{ g.setup_time }}</td>
+      <td class="meta">{{ g.approval.wait }}</td>
+    </tr>
     {% endfor %}
-  </div>
+  </table>
+  <p class="meta-line">easy = no approval wait &middot; medium = optional/short review &middot; hard = mandatory review with a real wait &middot; unknown = fetched docs don't establish it</p>
+</section>
+
+<section>
+  <h2>Two steps people confuse</h2>
+  <p class="lede"><strong>(1)</strong> You register one OAuth app with the provider and, often, get it approved or verified. <strong>(2)</strong> Each end user connects their account through a normal consent screen. Step 2 is quick everywhere; step 1 ranges from a 10-minute form (GitHub) to a weeks-long verification (Google restricted scopes). Every guide separates hands-on setup time from approval wait, names the exact console, and marks anything unverified as such.</p>
 </section>
 
 <script>
@@ -43,23 +39,23 @@ async function generate() {
   const q = document.getElementById('q').value.trim();
   const st = document.getElementById('status');
   const btn = document.getElementById('go');
-  if (!q) { st.textContent = 'Enter an app name or website.'; return; }
+  if (!q) { st.textContent = 'enter an app name or website'; return; }
   btn.disabled = true;
-  st.textContent = 'Agent is searching official documentation, fetching pages, and drafting a guide. This can take 30-90 seconds...';
+  st.textContent = '> searching official docs, fetching pages, drafting guide (30-90s)...';
   try {
     const r = await fetch('/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query: q})});
     const data = await r.json();
     if (data.url) { window.location = data.url; return; }
-    st.textContent = 'Could not generate: ' + (data.error || r.status);
+    st.textContent = '> failed: ' + (data.error || r.status);
   } catch (e) {
-    st.textContent = 'Request failed: ' + e;
+    st.textContent = '> request failed: ' + e;
   }
   btn.disabled = false;
 }
 document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 function filterGuides() {
   const v = document.getElementById('filter').value.toLowerCase();
-  document.querySelectorAll('#grid .card').forEach(c => {
+  document.querySelectorAll('#grid tr.row').forEach(c => {
     c.style.display = c.textContent.toLowerCase().includes(v) ? '' : 'none';
   });
 }

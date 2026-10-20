@@ -36,7 +36,7 @@ def test_parsers():
 def test_routes():
     c = TestClient(app)
     r = c.get("/")
-    assert r.status_code == 200 and "Guide library" in r.text
+    assert r.status_code == 200 and "rated guides" in r.text
     r = c.get("/guides/github")
     assert r.status_code == 200 and "OAuth apps" in r.text
     r = c.get("/guides/does-not-exist")

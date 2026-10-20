@@ -4,34 +4,34 @@
 <article class="guide">
   <div class="guide-head">
     <h1>{{ g.app_name }}</h1>
-    <span class="badge big {{ g.difficulty }}">{{ g.difficulty }}</span>
-    {% if g.generated %}<span class="badge generated">agent-generated</span>{% endif %}
+    <span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span>
+    {% if g.generated %}<span class="gen-flag">agent-generated</span>{% endif %}
   </div>
   <p class="reason">{{ g.difficulty_reason }}</p>
 
   <div class="verdicts">
-    <div class="verdict"><label>Hands-on setup</label><strong>{{ g.setup_time }}</strong></div>
-    <div class="verdict"><label>Approval needed</label><strong>{% if g.approval.required is sameas true %}Yes - {{ g.approval.kind }}{% elif g.approval.required is sameas false %}No{% else %}Unverified{% endif %}</strong></div>
-    <div class="verdict"><label>Expected wait</label><strong>{{ g.approval.wait }}</strong></div>
-    <div class="verdict"><label>Register at</label><strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
-      {% if g.console_check %}<span class="check">(unauthenticated check: HTTP {{ g.console_check.status or 'failed' }}{% if g.console_check.redirect %} &rarr; login/redirect{% endif %})</span>{% endif %}
+    <div class="verdict"><label>hands-on setup</label><strong>{{ g.setup_time }}</strong></div>
+    <div class="verdict"><label>approval</label><strong>{% if g.approval.required is sameas true %}Yes - {{ g.approval.kind }}{% elif g.approval.required is sameas false %}No{% else %}Unverified{% endif %}</strong></div>
+    <div class="verdict"><label>expected wait</label><strong>{{ g.approval.wait }}</strong></div>
+    <div class="verdict"><label>register at</label><strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
+      {% if g.console_check %}<span class="check">unauthenticated check: HTTP {{ g.console_check.status or 'failed' }}{% if g.console_check.redirect %} &rarr; login/redirect{% endif %}</span>{% endif %}
     </div>
   </div>
 
+  {% if g.approval.required is not sameas true and g.approval.required is not sameas false or g.difficulty == 'unknown' %}
+  <p class="warnblock"><strong>Incomplete guide.</strong> The documentation the agent could fetch did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the items under Uncertainties before building on it.</p>
+  {% endif %}
   {% if g.generated %}
-  <p class="notes"><strong>Sharing this guide:</strong> it is cached on the demo server and may not survive a restart. Use <a href="/guides/{{ g.slug }}/export">Download as Markdown</a> for a permanent, shareable copy.</p>
+  <p class="meta"><span class="meta-line">cached on the demo server; may not survive a restart</span> &middot; <a href="/guides/{{ g.slug }}/export">Download as Markdown</a> for a permanent copy.</p>
   {% else %}
   <p class="meta"><a href="/guides/{{ g.slug }}/export">Download as Markdown</a></p>
   {% endif %}
-  {% if g.approval.required is not sameas true and g.approval.required is not sameas false or g.difficulty == 'unknown' %}
-  <p class="notes warn"><strong>Incomplete guide:</strong> the documentation the agent could fetch did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the items under Uncertainties before building on it.</p>
-  {% endif %}
   <p class="summary">{{ g.summary }}</p>
-  {% if g.approval.notes %}<p class="notes"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
+  {% if g.approval.notes %}<p class="noteblock"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
 
-  <h2>Steps</h2>
+  <h2>Setup steps</h2>
   <ol class="steps">
-    {% for s in g.steps %}<li><strong>{{ s.title }}</strong><br>{{ s.detail }}</li>{% endfor %}
+    {% for s in g.steps %}<li><span class="st">{{ s.title }}</span><br><span class="sd">{{ s.detail }}</span></li>{% endfor %}
   </ol>
 
   <div class="cols">
@@ -47,7 +47,7 @@
   </div>
 
   <h2>Evidence</h2>
-  <p class="legend">Every claim below names its source. <span class="ev docs-supported">docs-supported</span> = stated in the linked official page. <span class="ev tested">tested</span> = we attempted it. Anything we could not verify is under Uncertainties, not here.</p>
+  <p class="legend"><span class="ev docs-supported">docs-supported</span> stated in the linked official page &middot; <span class="ev tested">tested</span> we attempted it &middot; anything unverifiable is under Uncertainties, not here.</p>
   <ul class="evidence">
     {% for e in g.evidence %}
     <li><span class="ev {{ e.status }}">{{ e.status }}</span> {{ e.claim }} <a href="{{ e.source }}">source</a></li>
@@ -61,9 +61,8 @@
 
   {% if g.sources_fetched %}
   <h2>Pages the agent fetched</h2>
-  <ul class="fetched">{% for u in g.sources_fetched %}<li><a href="{{ u }}">{{ u }}</a></li>{% endfor %}</ul>
-  <p class="meta">Generated in {{ g.generation_seconds }}s via {{ g.llm_provider }}.</p>
+  <ul class="srcs">{% for u in g.sources_fetched %}<li><a href="{{ u }}">{{ u }}</a></li>{% endfor %}</ul>
+  <p class="meta-line">generated in {{ g.generation_seconds }}s via {{ g.llm_provider }}</p>
   {% endif %}
-  {% if g.last_validated %}<p class="meta">Guide last validated against sources: {{ g.last_validated }}</p>{% endif %}
 </article>
 {% endblock %}
