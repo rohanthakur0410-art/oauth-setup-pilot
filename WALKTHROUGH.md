@@ -30,6 +30,7 @@ OAuth Setup Pilot answers a question every agent builder hits before launch: "wh
 - Live generation quality depends on what the agent can fetch; bot-blocked or JS-only docs thin out the evidence, and the guide says so.
 - The agent cannot log into provider consoles, so it cannot attempt the actual registration forms.
 - Generated guides are cached on ephemeral disk on free hosting; the library is permanent because it lives in the repo.
+- The hosted LLM API can be intermittently unavailable: on 2026-10-20 it returned 429/503/empty responses and timeouts at times. Two full live runs succeeded earlier that day; a Spotify run produced an honest partial and its bounded retry failed upstream. If a live demo run fails on camera, say exactly that - the evidence pipeline is the substance, and the library always works.
 
 ## What is verified vs what is pending (say this exactly)
 
@@ -37,9 +38,9 @@ Verified by automated checks in the repo (anyone can re-run them):
 - `python3 tests/smoke_test.py` - guide schema, HTML parsers, routes, SSRF guard, URL sanitizer, export.
 - `python3 scripts/check_sources.py` - every evidence URL in the five library guides resolves live today.
 
-Verified during the build (2026-10-20): all library claims checked against the linked official docs; the agent's search/fetch/discovery pipeline ran against a real unfamiliar app (Figma) and found its official docs; the anti-hallucination filter was exercised with a mock model response and dropped citations to pages that were never fetched; console URLs were reachability-tested unauthenticated.
+Verified during the build (2026-10-20): all library claims checked against the linked official docs; full live end-to-end generations ran on the real key for two unfamiliar apps (figma.com and resend.com) - official docs discovered and fetched, guide generated, evidence entries semantically verified against the fetched source text; a third unfamiliar app (Spotify) produced an honest partial guide that labelled its missing evidence as uncertainties; the anti-hallucination filter was exercised with a mock model response and dropped citations to pages that were never fetched; console URLs were reachability-tested unauthenticated.
 
-Pending at any given moment: a live end-to-end generation with the real LLM key, and the deployed URL. If either has not happened yet when you talk about the project, say the pipeline is tested against real documentation with a mocked model step, and the live run is the final check - do not claim a live run that has not happened.
+Pending at any given moment: a fresh live run succeeding right now (the hosted Gemini API was returning 429/503/empty responses and timeouts at times on 2026-10-20, so a given attempt may fail upstream - if asked, say two full live runs succeeded earlier that day and availability is intermittent), and the public deployed URL. Never present a guide as freshly generated if it was generated earlier; never promise a review timeline a provider has not documented.
 
 ## If they ask "how much of this did AI write?"
 
