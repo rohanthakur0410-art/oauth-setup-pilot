@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient
 from app.main import app, load_library
-from app.agent import _DDGParser, _TextExtractor, _is_public_url
+from app.agent import _DDGParser, _TextExtractor, _is_public_url, _sanitize_site
 
 REQUIRED = {"slug", "app_name", "developer_console", "difficulty", "setup_time",
             "approval", "summary", "steps", "requirements", "nuances",
@@ -58,8 +58,21 @@ def test_ssrf_guard():
     assert _is_public_url("https://docs.github.com/")
     print("ssrf guard OK")
 
+def test_url_sanitizer():
+    assert _sanitize_site("https://figma.com/apps?token=secret123#frag") == "https://figma.com/apps"
+    assert _sanitize_site("figma.com?api_key=xyz") == "https://figma.com"
+    assert _sanitize_site("https://example.com") == "https://example.com"
+    for bad in ("https://user:pass@example.com/", "ftp://example.com"):
+        try:
+            _sanitize_site(bad)
+            raise AssertionError(f"should have rejected {bad}")
+        except ValueError:
+            pass
+    print("url sanitizer OK")
+
 if __name__ == "__main__":
     test_ssrf_guard()
+    test_url_sanitizer()
     test_guides_schema()
     test_parsers()
     test_routes()

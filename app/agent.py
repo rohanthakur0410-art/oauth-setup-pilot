@@ -119,6 +119,25 @@ def _search(query: str, limit: int = 8) -> list[str]:
     return hits
 
 
+
+def _sanitize_site(url: str) -> str:
+    """Strip query strings, fragments and credentials from user-supplied URLs.
+
+    A pasted URL can carry tokens or other secrets in its query (?key=...).
+    Those must never reach search backends, the LLM prompt, logs, or the
+    stored guide - only scheme://host[:port][/path] is kept. URLs with
+    userinfo (user:pass@host) are rejected outright."""
+    if "://" not in url:
+        url = f"https://{url}"
+    p = urlparse(url)
+    if p.username or p.password:
+        raise ValueError("URLs containing credentials are not accepted")
+    if p.scheme not in ("http", "https") or not p.netloc:
+        raise ValueError("unsupported URL")
+    path = p.path if p.path not in ("", "/") else ""
+    return f"{p.scheme}://{p.netloc}{path}"
+
+
 def _registrable(host: str) -> str:
     parts = host.lower().replace("www.", "").split(".")
     return ".".join(parts[-2:]) if len(parts) >= 2 else host.lower()
@@ -308,12 +327,12 @@ def investigate(query: str) -> dict:
     if not query:
         raise ValueError("empty query")
     if re.match(r"^https?://", query) or re.match(r"^[\w-]+(\.[\w-]+)+$", query):
-        site = query if query.startswith("http") else f"https://{query}"
+        site = _sanitize_site(query)
         name = urlparse(site).netloc.replace("www.", "")
     else:
         name = query
         hits = _search(f"{query} official website")
-        site = hits[0] if hits else ""
+        site = _sanitize_site(hits[0]) if hits else ""
 
     candidates: list[str] = []
     for q in (f"{name} OAuth app registration developer documentation",
