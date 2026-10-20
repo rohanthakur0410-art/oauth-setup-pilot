@@ -31,6 +31,16 @@ OAuth Setup Pilot answers a question every agent builder hits before launch: "wh
 - The agent cannot log into provider consoles, so it cannot attempt the actual registration forms.
 - Generated guides are cached on ephemeral disk on free hosting; the library is permanent because it lives in the repo.
 
+## What is verified vs what is pending (say this exactly)
+
+Verified by automated checks in the repo (anyone can re-run them):
+- `python3 tests/smoke_test.py` - guide schema, HTML parsers, routes, SSRF guard, URL sanitizer, export.
+- `python3 scripts/check_sources.py` - every evidence URL in the five library guides resolves live today.
+
+Verified during the build (2026-10-20): all library claims checked against the linked official docs; the agent's search/fetch/discovery pipeline ran against a real unfamiliar app (Figma) and found its official docs; the anti-hallucination filter was exercised with a mock model response and dropped citations to pages that were never fetched; console URLs were reachability-tested unauthenticated.
+
+Pending at any given moment: a live end-to-end generation with the real LLM key, and the deployed URL. If either has not happened yet when you talk about the project, say the pipeline is tested against real documentation with a mocked model step, and the live run is the final check - do not claim a live run that has not happened.
+
 ## If they ask "how much of this did AI write?"
 
 Answer honestly: the project was built with agentic coding, which the assignment explicitly invites ("Use agents to investigate...", and the email's "comfort with agentic coding"). The design decisions, the evidence discipline, and the validation against real sources are the substance - and every library claim can be re-checked with `python3 scripts/check_sources.py`.
