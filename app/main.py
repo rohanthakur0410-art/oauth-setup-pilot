@@ -8,6 +8,7 @@ Routes:
   /healthz           health check
 """
 import json
+import logging
 import os
 import re
 from pathlib import Path
@@ -24,6 +25,8 @@ BASE = Path(__file__).resolve().parent.parent
 GUIDES_DIR = Path(os.environ.get("GUIDES_DIR", BASE / "guides"))
 GENERATED_DIR = Path(os.environ.get("GENERATED_DIR", BASE / "generated"))
 GENERATED_DIR.mkdir(exist_ok=True)
+
+log = logging.getLogger("oauth-pilot")
 
 app = FastAPI(title="OAuth Setup Pilot")
 app.mount("/static", StaticFiles(directory=BASE / "app" / "static"), name="static")

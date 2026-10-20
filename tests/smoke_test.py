@@ -74,12 +74,35 @@ def test_url_sanitizer():
             pass
     print("url sanitizer OK")
 
+
+def test_error_paths():
+    """Error paths must return safe client-facing JSON. Regression: a logging
+    NameError in the 500 handler once crashed the handler itself, dropping the
+    connection instead of showing the safe message."""
+    import app.main as M
+    c = TestClient(M.app)
+    orig = M.investigate
+    try:
+        M.investigate = lambda q: (_ for _ in ()).throw(ValueError("boom-internal"))
+        r = c.post("/api/generate", json={"query": "zzfakeapp"})
+        assert r.status_code == 500 and r.json()["error"] == "Couldn't generate the guide right now. Please try again.", (r.status_code, r.text)
+        M.investigate = lambda q: (_ for _ in ()).throw(RuntimeError("LLM_UNAVAILABLE"))
+        r = c.post("/api/generate", json={"query": "zzfakeapp"})
+        assert r.status_code == 503 and r.json()["error"] == "Couldn't generate the guide right now. Please try again.", (r.status_code, r.text)
+        M.investigate = lambda q: (_ for _ in ()).throw(RuntimeError("Could not identify an official website matching 'zzfakeapp'."))
+        r = c.post("/api/generate", json={"query": "zzfakeapp"})
+        assert r.status_code == 503 and "official website" in r.json()["error"], (r.status_code, r.text)
+    finally:
+        M.investigate = orig
+    print("error paths OK")
+
 if __name__ == "__main__":
     test_ssrf_guard()
     test_url_sanitizer()
     test_guides_schema()
     test_parsers()
     test_routes()
+    test_error_paths()
     print("ALL SMOKE TESTS PASSED")
 
 # --- honesty guard: thin corpus cannot establish "no approval" or a time ---
