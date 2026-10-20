@@ -11,7 +11,7 @@
 
   <div class="verdicts">
     <div class="verdict"><label>Hands-on setup</label><strong>{{ g.setup_time }}</strong></div>
-    <div class="verdict"><label>Approval needed</label><strong>{{ 'Yes - ' + g.approval.kind if g.approval.required else 'No' }}</strong></div>
+    <div class="verdict"><label>Approval needed</label><strong>{% if g.approval.required is sameas true %}Yes - {{ g.approval.kind }}{% elif g.approval.required is sameas false %}No{% else %}Unverified{% endif %}</strong></div>
     <div class="verdict"><label>Expected wait</label><strong>{{ g.approval.wait }}</strong></div>
     <div class="verdict"><label>Register at</label><strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
       {% if g.console_check %}<span class="check">(unauthenticated check: HTTP {{ g.console_check.status or 'failed' }}{% if g.console_check.redirect %} &rarr; login/redirect{% endif %})</span>{% endif %}
@@ -22,6 +22,9 @@
   <p class="notes"><strong>Sharing this guide:</strong> it is cached on the demo server and may not survive a restart. Use <a href="/guides/{{ g.slug }}/export">Download as Markdown</a> for a permanent, shareable copy.</p>
   {% else %}
   <p class="meta"><a href="/guides/{{ g.slug }}/export">Download as Markdown</a></p>
+  {% endif %}
+  {% if g.approval.required is not sameas true and g.approval.required is not sameas false or g.difficulty == 'unknown' %}
+  <p class="notes warn"><strong>Incomplete guide:</strong> the documentation the agent could fetch did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the items under Uncertainties before building on it.</p>
   {% endif %}
   <p class="summary">{{ g.summary }}</p>
   {% if g.approval.notes %}<p class="notes"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}

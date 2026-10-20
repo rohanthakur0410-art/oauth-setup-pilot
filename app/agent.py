@@ -303,10 +303,10 @@ Produce a JSON object with EXACTLY these keys:
   "app_name": string,
   "website": string (canonical marketing site),
   "developer_console": string (URL where the OAuth app is registered; from the docs if present),
-  "difficulty": "easy" | "medium" | "hard",
-  "difficulty_reason": string (one sentence; easy=no approval wait, medium=optional/short review, hard=mandatory review or verification with real wait),
-  "setup_time": string (hands-on time to register the app, e.g. "~15 minutes"),
-  "approval": {{"required": boolean, "kind": string (e.g. "none", "marketplace review", "scope verification + security assessment"), "wait": string (e.g. "none", "3-5 business days", "up to 10 weeks", "unknown"), "notes": string}},
+  "difficulty": "easy" | "medium" | "hard" | "unknown",
+  "difficulty_reason": string (one sentence; easy=no approval wait, medium=optional/short review, hard=mandatory review or verification with real wait, unknown=the fetched docs do not establish the approval/review facts needed to rate it),
+  "setup_time": string (hands-on time to register the app, e.g. "~15 minutes"; use "unknown" if the fetched docs do not state it - never estimate),
+  "approval": {{"required": true | false | null, "kind": string (e.g. "none", "marketplace review", "scope verification + security assessment", "unknown"), "wait": string (e.g. "none", "3-5 business days", "up to 10 weeks", "unknown"), "notes": string}},
   "summary": string (2-3 sentences a developer can act on),
   "steps": [{{"title": string, "detail": string}}],
   "requirements": [string],
@@ -318,7 +318,37 @@ Produce a JSON object with EXACTLY these keys:
   "uncertainties": [string]
 }}
 
-Rules: every evidence.source must be copied verbatim from the fetched URLs. Difficulty must follow the rubric. Return ONLY the JSON object."""
+Rules: every evidence.source must be copied verbatim from the fetched URLs. Difficulty must follow the rubric. ABSENCE OF INFORMATION IS NOT EVIDENCE OF ABSENCE: if the fetched text does not explicitly state whether a review/approval/verification is required, set approval.required to null, approval.kind to "unknown", approval.wait to "unknown" and difficulty to "unknown" - never conclude "no approval needed" from missing documentation. If essential setup specifics (redirect URI rules, scopes, credential handling) are not in the fetched text, keep steps to what is documented and name the missing specifics in uncertainties. Return ONLY the JSON object."""
+
+
+def _honesty_guard(guide: dict, fetched: dict) -> None:
+    """Structural honesty check (not model-dependent): a thin corpus cannot
+    establish 'no approval needed' or a concrete setup time. Coerces
+    unjustified categorical claims to unknown and records why."""
+    corpus = "\n".join(fetched.values()).lower()
+    approval_terms = len(re.findall(r"review|approval|verification|listing|marketplace", corpus))
+    ap = guide.get("approval") or {}
+    if ap.get("required") is False and approval_terms < 3:
+        ap["required"] = None
+        ap["kind"] = "unknown"
+        ap["wait"] = "unknown"
+        guide.setdefault("uncertainties", []).append(
+            "The fetched documentation did not establish whether an approval or review is required; "
+            "absence of a mention in limited documentation is not evidence that none is required.")
+    if not isinstance(ap.get("required"), bool):
+        ap.setdefault("kind", "unknown")
+        if ap.get("wait") in (None, "", "none"):
+            ap["wait"] = "unknown"
+    guide["approval"] = ap
+    if re.search(r"\d", str(guide.get("setup_time") or "")) and not re.search(
+            r"\b\d+\s*(minute|hour|day|week)s?\b|business days", corpus):
+        guide["setup_time"] = "unknown"
+        guide.setdefault("uncertainties", []).append(
+            "No hands-on setup time is stated in the fetched documentation, so no estimate is given.")
+    if guide.get("difficulty") == "easy" and not isinstance(ap.get("required"), bool):
+        guide["difficulty"] = "unknown"
+        guide["difficulty_reason"] = ("The fetched documentation does not establish whether an approval "
+                                      "or review is required, so difficulty cannot be rated responsibly.")
 
 
 def investigate(query: str) -> dict:
@@ -407,6 +437,8 @@ def investigate(query: str) -> dict:
     if dropped:
         guide.setdefault("uncertainties", []).append(
             f"{dropped} model-cited source(s) were dropped because they were not among the pages actually fetched.")
+
+    _honesty_guard(guide, fetched)
 
     # Console liveness check (unauthenticated attempt).
     console = guide.get("developer_console") or ""

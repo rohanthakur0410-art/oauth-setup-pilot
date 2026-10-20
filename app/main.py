@@ -70,10 +70,12 @@ def guide_markdown(g: dict) -> str:
     L = [f"# {g['app_name']} - OAuth setup & approval guide", "",
          f"**Difficulty:** {g['difficulty']} - {g['difficulty_reason']}", "",
          f"- Hands-on setup: {g['setup_time']}",
-         f"- Approval: {'Yes - ' + g['approval']['kind'] if g['approval']['required'] else 'No'}",
+         f"- Approval: {('Yes - ' + g['approval']['kind']) if g['approval'].get('required') is True else ('No' if g['approval'].get('required') is False else 'Unverified - not established in the fetched documentation')}",
          f"- Expected wait: {g['approval']['wait']}",
          f"- Register at: {g['developer_console']}", "",
          g["summary"], ""]
+    if g["approval"].get("required") not in (True, False) or g.get("difficulty") == "unknown":
+        L += ["> **Incomplete guide:** the fetched documentation did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the Uncertainties before relying on it.", ""]
     if g["approval"].get("notes"):
         L += [f"**Approval notes:** {g['approval']['notes']}", ""]
     L.append("## Steps")

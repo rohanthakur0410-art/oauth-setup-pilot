@@ -25,7 +25,7 @@ button:disabled { opacity: .5; cursor: wait; }
 .badge { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; color: #fff; }
 .badge.easy { background: var(--easy); } .badge.medium { background: var(--medium); } .badge.hard { background: var(--hard); }
 .badge.big { font-size: 13px; padding: 5px 12px; }
-.badge.generated { background: #6d28d9; }
+.badge.generated { background: #6d28d9; } .badge.unknown { background: #6b7280; }
 .guide-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .guide-head h1 { margin: 18px 0 4px; }
 .reason { color: var(--muted); margin-top: 0; }
@@ -52,3 +52,5 @@ h2 { font-size: 19px; margin-top: 30px; border-bottom: 1px solid var(--line); pa
 .explain h2 { margin-top:0; font-size:18px; border:0; }
 .explain p { font-size:14.5px; line-height:1.55; color:#334155; }
 .warn { font-size: 13px; color: #9a3412; margin: 8px 0 0; }
+
+.notes.warn { background: #fef2f2; border-color: #fca5a5; }

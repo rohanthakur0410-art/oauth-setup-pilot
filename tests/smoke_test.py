@@ -81,3 +81,25 @@ if __name__ == "__main__":
     test_parsers()
     test_routes()
     print("ALL SMOKE TESTS PASSED")
+
+# --- honesty guard: thin corpus cannot establish "no approval" or a time ---
+def test_honesty_guard():
+    from app.agent import _honesty_guard
+    # Thin corpus, model claimed easy/no-approval/15min: must be coerced.
+    g = {"difficulty": "easy", "difficulty_reason": "x", "setup_time": "~15 minutes",
+         "approval": {"required": False, "kind": "none", "wait": "none"}}
+    _honesty_guard(g, {"https://example.com/docs": "You can register an app in your account settings."})
+    assert g["approval"]["required"] is None, "false approval must become unknown on thin corpus"
+    assert g["approval"]["wait"] == "unknown"
+    assert g["setup_time"] == "unknown", "unstated time must become unknown"
+    assert g["difficulty"] == "unknown", "easy cannot stand without approval facts"
+    assert any("absence" in u for u in g["uncertainties"])
+    # Rich corpus with explicit review language: claims must survive.
+    rich = "The review process. " * 10 + "Approval takes 3-5 business days."
+    g2 = {"difficulty": "easy", "difficulty_reason": "x", "setup_time": "~15 minutes",
+          "approval": {"required": False, "kind": "none", "wait": "none"}}
+    _honesty_guard(g2, {"https://example.com/docs": rich})
+    assert g2["approval"]["required"] is False, "grounded claims must survive"
+    print("honesty guard OK")
+
+test_honesty_guard()
