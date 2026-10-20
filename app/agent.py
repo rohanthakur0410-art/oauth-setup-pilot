@@ -129,12 +129,13 @@ def _discover_docs(site: str) -> list[str]:
     and probe common docs locations on its domain."""
     found = []
     try:
-        r = httpx.get(site if site.startswith("http") else f"https://{site}",
-                      headers=UA, timeout=20, follow_redirects=True)
+        r = _safe_get(site if site.startswith("http") else f"https://{site}", timeout=20)
+        if r is None:
+            return found
         p = _TextExtractor()
         p.feed(r.text[:400_000])
-        base = f"{urlparse(str(r.url)).scheme}://{urlparse(str(r.url)).netloc}"
-        dom = _registrable(urlparse(str(r.url)).netloc)
+        base = f"{urlparse(site if site.startswith('http') else 'https://' + site).scheme}://{urlparse(site if site.startswith('http') else 'https://' + site).netloc}"
+        dom = _registrable(urlparse(base).netloc)
         for href in p.links:
             u = urljoin(base, href)
             h = urlparse(u)
@@ -154,20 +155,73 @@ def _discover_docs(site: str) -> list[str]:
     return found
 
 
-def _fetch_text(url: str) -> str | None:
+MAX_REDIRECTS = 3
+MAX_BYTES = 2_000_000
+
+
+def _is_public_url(url: str) -> bool:
+    """SSRF guard: only http(s), only hosts resolving to public IPs."""
+    import ipaddress
+    import socket
+    h = urlparse(url)
+    if h.scheme not in ("http", "https") or not h.netloc:
+        return False
+    host = h.hostname or ""
     try:
-        r = httpx.get(url, headers=UA, timeout=25, follow_redirects=True)
-        if r.status_code >= 400 or "text/html" not in r.headers.get("content-type", ""):
-            return None
-        p = _TextExtractor()
-        p.feed(r.text[:400_000])
-        return p.text()[:FETCH_CAP]
+        infos = socket.getaddrinfo(host, None)
     except Exception:
+        return False
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return False
+    return True
+
+
+def _safe_get(url: str, timeout: int = 25) -> httpx.Response | None:
+    """GET with manual redirect following, re-checking every hop against the
+    SSRF guard, and a hard cap on downloaded bytes."""
+    current = url
+    for _ in range(MAX_REDIRECTS + 1):
+        if not _is_public_url(current):
+            return None
+        try:
+            with httpx.stream("GET", current, headers=UA, timeout=timeout,
+                              follow_redirects=False) as r:
+                if r.is_redirect:
+                    loc = r.headers.get("location")
+                    if not loc:
+                        return None
+                    current = urljoin(current, loc)
+                    continue
+                chunks, total = [], 0
+                for chunk in r.iter_bytes(65536):
+                    total += len(chunk)
+                    if total > MAX_BYTES:
+                        return None
+                    chunks.append(chunk)
+                body = b"".join(chunks)
+                return httpx.Response(r.status_code, headers=r.headers, content=body)
+        except Exception:
+            return None
+    return None
+
+
+def _fetch_text(url: str) -> str | None:
+    r = _safe_get(url, timeout=25)
+    if r is None or r.status_code >= 400:
         return None
+    if "text/html" not in r.headers.get("content-type", ""):
+        return None
+    p = _TextExtractor()
+    p.feed(r.text[:400_000])
+    return p.text()[:FETCH_CAP]
 
 
 def _head_check(url: str) -> dict:
     """Record what an unauthenticated reachability attempt saw."""
+    if not _is_public_url(url):
+        return {"url": url, "status": None, "error": "blocked by SSRF guard"}
     try:
         r = httpx.get(url, headers=UA, timeout=20, follow_redirects=False)
         return {"url": url, "status": r.status_code,

@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient
 from app.main import app, load_library
-from app.agent import _DDGParser, _TextExtractor
+from app.agent import _DDGParser, _TextExtractor, _is_public_url
 
 REQUIRED = {"slug", "app_name", "developer_console", "difficulty", "setup_time",
             "approval", "summary", "steps", "requirements", "nuances",
@@ -47,7 +47,19 @@ def test_routes():
     assert r.status_code == 400
     print("routes OK")
 
+def test_ssrf_guard():
+    assert not _is_public_url("http://localhost:8000/")
+    assert not _is_public_url("http://127.0.0.1/")
+    assert not _is_public_url("http://169.254.169.254/latest/meta-data")
+    assert not _is_public_url("http://10.0.0.5/internal")
+    assert not _is_public_url("http://192.168.1.1/")
+    assert not _is_public_url("ftp://example.com/")
+    assert not _is_public_url("file:///etc/passwd")
+    assert _is_public_url("https://docs.github.com/")
+    print("ssrf guard OK")
+
 if __name__ == "__main__":
+    test_ssrf_guard()
     test_guides_schema()
     test_parsers()
     test_routes()

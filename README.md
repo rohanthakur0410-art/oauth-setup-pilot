@@ -37,7 +37,7 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 
 1. **Evidence-first guides.** Every claim in a guide carries a source URL and a status: `docs-supported` (stated on the linked official page) or `tested` (we attempted it, e.g. an unauthenticated console reachability check). Anything not verified is listed under *Uncertainties* - never silently asserted. The library guides were hand-validated against the cited official docs on 2026-10-20, and `scripts/check_sources.py` re-verifies that every source URL is live.
 2. **Anti-hallucination post-validation.** The generation agent is instructed to cite only pages it was shown, and the code enforces it: any model-cited URL that was not actually fetched is dropped from evidence and recorded as an uncertainty. Console URLs produced by the model get a live unauthenticated reachability check.
-3. **Pluggable LLM and search.** `LLM_PROVIDER=gemini|openai|groq`; default model `gemini-3.8-flash` (free-tier AI Studio key is enough). Search uses the Brave Search API when `BRAVE_API_KEY` is set (Brave advertises a free plan of 2,000 queries/month at 1 query/second), falling back to keyless DuckDuckGo HTML plus on-site heuristics (developer/docs links discovered on the provider's own homepage). DuckDuckGo is frequently challenge-blocked from cloud IPs, which is exactly why the Brave fallback exists.
+3. **Pluggable LLM and search.** `LLM_PROVIDER=gemini|openai|groq`; default model `gemini-3.8-flash` (listed as a current model on the official models page). The Gemini API has a Free usage tier requiring only an active project (no billing), available in India per the official available-regions list; Google no longer publishes fixed free-tier numbers on the rate-limits page - exact limits are shown in AI Studio.. Search uses the Brave Search API when `BRAVE_API_KEY` is set (Brave advertises a free plan of 2,000 queries/month at 1 query/second), falling back to keyless DuckDuckGo HTML plus on-site heuristics (developer/docs links discovered on the provider's own homepage). DuckDuckGo is frequently challenge-blocked from cloud IPs, which is exactly why the Brave fallback exists.
 4. **Honest degradation.** Without an LLM key, live generation returns a clear 503 ("GEMINI_API_KEY is not configured") instead of faking a result. The pre-built library always works.
 5. **Difficulty rubric.** `easy` = no approval wait; `medium` = optional or short review; `hard` = mandatory review/verification with a real wait. The five library apps were chosen to span the rubric: GitHub (easy, instant), Notion (easy; optional listing review of 5-10 business days), Slack (hard; 10-workspace prerequisite + up to 10 weeks functional review), Google (hard; 3-5 business days sensitive-scope verification, weeks + annual third-party CASA assessment for restricted scopes), HubSpot (hard; 3-install prerequisite + up to 60 days total process).
 
@@ -47,6 +47,12 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 - Slack's review is only triggered by Marketplace submission, but Slack states commercial distribution *requires* Marketplace submission - so "skip the review" is not a real distribution strategy.
 - GitHub and Google consoles are fully login-gated (observed via unauthenticated 302 redirects); no part of registration can be inspected without an account.
 - Google's brand-verification result expires after 7 days if you don't publish - a trap for teams who verify early.
+
+## Security notes
+
+- All outbound fetching (search results, homepage links, model-suggested console URLs) passes an SSRF guard: http/https only, host must resolve to public IPs only (no private/loopback/link-local/reserved), redirects followed manually (max 3) with every hop re-checked, and downloads capped at 2 MB.
+- Generation queries are restricted to a conservative character set and length.
+- No secrets in the repo; API keys come from environment variables only.
 
 ## Limitations
 
