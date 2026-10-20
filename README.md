@@ -6,6 +6,10 @@ Built for the Composio APM Integrations take-home assignment.
 
 **What this is:** a small web app that answers three questions for any OAuth provider - *where do I start, what will it cost me in time and effort, and what can block me?* It ships with a library of source-validated guides and can investigate an unfamiliar app live: submit a name or website and an agent searches official documentation, fetches it, drafts a guide, and shows its evidence and uncertainties.
 
+## Links
+
+- Source repository: https://github.com/rohanthakur0410-art/oauth-setup-pilot
+
 ## Quickstart (local)
 
 ```bash
