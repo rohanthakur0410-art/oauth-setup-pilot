@@ -390,8 +390,26 @@ def _head_check(url: str) -> dict:
 
 
 def _llm(prompt: str) -> str:
-    """Call the configured LLM. Raises RuntimeError with a clear message if unconfigured."""
+    """Call the configured LLM. Raises RuntimeError with a clear message if unconfigured.
+    Retried once on transient network errors."""
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+    last_exc = None
+    for attempt in range(3):
+        try:
+            return _llm_once(prompt, provider)
+        except NETWORK_EXC as e:
+            last_exc = e
+            log.warning("LLM call network error (attempt %d): %r", attempt + 1, e)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code < 500:
+                raise
+            last_exc = e
+            log.warning("LLM call server error %d (attempt %d)", e.response.status_code, attempt + 1)
+        time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"LLM call failed after retries: {last_exc}")
+
+
+def _llm_once(prompt: str, provider: str) -> str:
     if provider == "gemini":
         key = os.environ.get("GEMINI_API_KEY")
         if not key:
@@ -490,19 +508,51 @@ def _honesty_guard(guide: dict, fetched: dict) -> None:
                                       "or review is required, so difficulty cannot be rated responsibly.")
 
 
+def _name_matches_site(name: str, site: str) -> bool:
+    """Guard against resolving a name-only query to an unrelated site.
+    Accepts when a normalized query token appears in the site's registrable
+    hostname (or vice versa), or is a close fuzzy match (typos/variants)."""
+    import difflib
+    host = _registrable(urlparse(site).netloc).split(".")[0]
+    nq = re.sub(r"[^a-z0-9]", "", host.lower())
+    if not nq:
+        return False
+    for tok in re.split(r"[^a-z0-9]+", name.lower()):
+        t = re.sub(r"[^a-z0-9]", "", tok)
+        if len(t) < 3:
+            continue
+        if t in nq or nq in t:
+            return True
+        if difflib.SequenceMatcher(None, t, nq).ratio() >= 0.6:
+            return True
+    return False
+
+
 def investigate(query: str) -> dict:
     """Run the full pipeline. Returns a guide dict with provenance metadata."""
     started = time.time()
     query = query.strip()
     if not query:
         raise ValueError("empty query")
+    is_url_input = True
     if re.match(r"^https?://", query) or re.match(r"^[\w-]+(\.[\w-]+)+$", query):
         site = _sanitize_site(query)
         name = urlparse(site).netloc.replace("www.", "")
     else:
         name = query
-        hits = _search(f"{query} official website")
-        site = _sanitize_site(hits[0]) if hits else ""
+        site = ""
+        for h in _search(f"{query} official website"):
+            cand = _sanitize_site(h)
+            if cand and _name_matches_site(query, cand):
+                site = cand
+                break
+        if not site:
+            raise RuntimeError(
+                f"Could not identify an official website matching '{query}'. "
+                "Search results did not include a site whose name corresponds to this app, "
+                "so no research was attempted rather than risk documenting the wrong product. "
+                "Try the app's exact website URL instead (e.g. https://example.com).")
+        is_url_input = False
 
     candidates: list[str] = []
     for q in (f"{name} OAuth app registration developer documentation",
@@ -568,6 +618,16 @@ def investigate(query: str) -> dict:
                 continue
             if t and len(t) > 400:
                 fetched[v] = t
+
+    if fetched and not is_url_input:
+        toks = [re.sub(r"[^a-z0-9]", "", t) for t in re.split(r"[^a-z0-9]+", name.lower())]
+        toks = [t for t in toks if len(t) >= 3]
+        corpus = re.sub(r"[^a-z0-9]", "", " ".join(fetched.values()).lower())
+        if toks and not any(t in corpus for t in toks):
+            raise RuntimeError(
+                f"The documentation found for '{query}' does not mention this app name - "
+                "the search likely resolved to the wrong product, so no guide was generated "
+                "rather than guess. Try the app's exact website URL instead.")
 
     if not fetched:
         if net_fail:
