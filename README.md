@@ -59,7 +59,7 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 - Live generation quality depends on the search backend and the fetched pages; sites that block bots or render docs client-side yield thin evidence, which the guide will show as uncertainties.
 - The agent cannot log into provider consoles, so "attempted setup" is limited to unauthenticated reachability checks; pre-requisites inside consoles (e.g. Slack's per-app queue estimate) are out of reach without accounts.
 - Generated-guide caching uses local disk, which is ephemeral on free hosting.
-- No authentication on the app itself; `/api/generate` is unthrottled. Fine for a take-home demo, not for public production use.
+- No user authentication; `/api/generate` is guarded only by a per-IP allowance (5 generations / 10 minutes) and a small global concurrency cap to protect the LLM budget. Fine for a take-home demo, not for public production use.
 
 ## AI-use disclosure
 

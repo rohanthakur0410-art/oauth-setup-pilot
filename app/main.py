@@ -69,8 +69,47 @@ class GenRequest(BaseModel):
     query: str
 
 
+# Minimal abuse guard for a public demo: per-IP generation allowance and a
+# global concurrency cap so one visitor cannot burn the LLM budget.
+import threading, time
+_GEN_LOCK = threading.Lock()
+_GEN_TIMES: dict[str, list[float]] = {}
+_GEN_ACTIVE = 0
+GEN_LIMIT = 5          # generations per window per IP
+GEN_WINDOW = 600       # seconds
+GEN_MAX_PARALLEL = 2
+
+
+def _rate_check(ip: str) -> bool:
+    now = time.time()
+    with _GEN_LOCK:
+        times = [t for t in _GEN_TIMES.get(ip, []) if now - t < GEN_WINDOW]
+        if len(times) >= GEN_LIMIT:
+            _GEN_TIMES[ip] = times
+            return False
+        times.append(now)
+        _GEN_TIMES[ip] = times
+        return True
+
+
 @app.post("/api/generate")
-def generate(req: GenRequest):
+def generate(req: GenRequest, request: Request):
+    global _GEN_ACTIVE
+    ip = request.client.host if request.client else "unknown"
+    if not _rate_check(ip):
+        return JSONResponse({"error": f"Rate limit: at most {GEN_LIMIT} generations per 10 minutes."}, status_code=429)
+    with _GEN_LOCK:
+        if _GEN_ACTIVE >= GEN_MAX_PARALLEL:
+            return JSONResponse({"error": "Another investigation is running; try again in a minute."}, status_code=429)
+        _GEN_ACTIVE += 1
+    try:
+        return _generate(req)
+    finally:
+        with _GEN_LOCK:
+            _GEN_ACTIVE -= 1
+
+
+def _generate(req: GenRequest):
     q = req.query.strip()
     if not q:
         raise HTTPException(400, "query required")
