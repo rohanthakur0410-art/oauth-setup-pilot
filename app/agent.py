@@ -363,6 +363,32 @@ def investigate(query: str) -> dict:
         if len(fetched) >= MAX_DOCS:
             break
 
+    # One-level deepen: when the corpus barely mentions OAuth, follow
+    # OAuth-looking links from the fetched pages themselves (same domain only).
+    def _oauth_mentions(t: str) -> int:
+        return len(re.findall(r"oauth|authorization", t, re.I))
+    if sum(1 for t in fetched.values() if _oauth_mentions(t) >= 3) < 2 and site:
+        extra: list[str] = []
+        for u in list(fetched):
+            r = _safe_get(u, timeout=20)
+            if r is None or "text/html" not in r.headers.get("content-type", ""):
+                continue
+            p = _TextExtractor()
+            p.feed(r.text[:400_000])
+            for href in p.links:
+                v = urljoin(u, href)
+                h = urlparse(v)
+                if (h.scheme in ("http", "https") and _registrable(h.netloc) == dom
+                        and re.search(r"oauth|authorization|authentication", v, re.I)
+                        and v not in fetched and v not in extra):
+                    extra.append(v)
+            if len(extra) >= 6:
+                break
+        for v in extra[:3]:
+            t = _fetch_text(v)
+            if t and len(t) > 400:
+                fetched[v] = t
+
     if not fetched:
         raise RuntimeError(f"Could not fetch any usable documentation for '{query}'.")
 
