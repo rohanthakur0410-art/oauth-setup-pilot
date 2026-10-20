@@ -20,6 +20,7 @@ from urllib.parse import urljoin, urlparse, parse_qs, unquote
 import httpx
 import logging
 import zlib
+import base64
 
 log = logging.getLogger("agent")
 
@@ -48,6 +49,43 @@ class _DDGParser(HTMLParser):
             self.results.append(unquote(m.group(1)))
         elif href.startswith("http"):
             self.results.append(href)
+
+
+class _BingParser(HTMLParser):
+    """Parse Bing HTML results: <h2><a href="REAL"> inside <li class="b_algo">.
+    Bing wraps some links in redirect/tracking URLs; keep only direct http(s)."""
+
+    def __init__(self):
+        super().__init__()
+        self.results = []
+        self._in_algo = 0
+        self._in_h2 = 0
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "li" and "b_algo" in a.get("class", ""):
+            self._in_algo += 1
+        elif tag == "h2" and self._in_algo:
+            self._in_h2 += 1
+        elif tag == "a" and self._in_algo and self._in_h2:
+            href = a.get("href", "")
+            # Bing wraps results in /ck/a redirect URLs; the real destination
+            # is base64url-encoded in the u param after an "a1" prefix.
+            m = re.search(r"[?&]u=a1([^&]+)", href)
+            if m:
+                s = m.group(1) + "=" * (-len(m.group(1)) % 4)
+                try:
+                    href = base64.urlsafe_b64decode(s).decode("utf-8", "replace")
+                except Exception:
+                    return
+            if href.startswith("http") and "bing.com" not in urlparse(href).netloc:
+                self.results.append(href)
+
+    def handle_endtag(self, tag):
+        if tag == "li" and self._in_algo:
+            self._in_algo -= 1
+        elif tag == "h2" and self._in_h2:
+            self._in_h2 -= 1
 
 
 class _TextExtractor(HTMLParser):
@@ -100,6 +138,27 @@ def _search_ddg(query: str, limit: int = 8) -> list[str]:
         return []
 
 
+def _search_bing(query: str, limit: int = 8) -> list[str]:
+    """Bing HTML search, no key. Fallback when DDG challenge-blocks this egress IP."""
+    try:
+        r = httpx.get("https://www.bing.com/search", params={"q": query},
+                      headers=UA, timeout=20, follow_redirects=True)
+        if r.status_code != 200:
+            return []
+        p = _BingParser()
+        p.feed(r.text)
+        seen, out = set(), []
+        for u in p.results:
+            if u not in seen:
+                seen.add(u)
+                out.append(u)
+            if len(out) >= limit:
+                break
+        return out
+    except Exception:
+        return []
+
+
 def _search_brave(query: str, limit: int = 8) -> list[str]:
     key = os.environ.get("BRAVE_API_KEY")
     if not key:
@@ -120,6 +179,8 @@ def _search(query: str, limit: int = 8) -> list[str]:
     hits = _search_brave(query, limit)
     if not hits:
         hits = _search_ddg(query, limit)
+    if not hits:
+        hits = _search_bing(query, limit)
     return hits
 
 
