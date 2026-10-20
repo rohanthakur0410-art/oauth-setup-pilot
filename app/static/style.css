@@ -63,7 +63,7 @@ h2 { font-size: var(--fs-sec); font-weight: 650; margin: var(--sp-8) 0 var(--sp-
 .gen .warn { font-size: 12px; color: var(--hard); margin: var(--sp-3) 0 0; }
 .status { font-size: var(--fs-meta); color: var(--muted); margin-top: var(--sp-2); min-height: 1em; }
 .status .elapsed { font-family: var(--mono); }
-.status.error { color: var(--hard); }
+.status.error { color: var(--hard); overflow-wrap: anywhere; word-break: break-word; }
 .status.error a { margin-left: 4px; }
 
 /* library: comparison table (desktop / tablet) */

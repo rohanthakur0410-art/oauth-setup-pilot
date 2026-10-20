@@ -178,8 +178,14 @@ def _generate(req: GenRequest):
     try:
         guide = investigate(q)
     except RuntimeError as e:
-        return JSONResponse({"error": str(e)}, status_code=503)
-    except Exception as e:
-        return JSONResponse({"error": f"investigation failed: {e}"}, status_code=500)
+        msg = str(e)
+        if msg.startswith("LLM_UNAVAILABLE") or "not configured" in msg:
+            # Provider-side failure: concise, no endpoints or internals.
+            return JSONResponse({"error": "Couldn't generate the guide right now. Please try again."}, status_code=503)
+        # Research-miss messages are already human-readable and safe.
+        return JSONResponse({"error": msg}, status_code=503)
+    except Exception:
+        log.exception("investigation failed")
+        return JSONResponse({"error": "Couldn't generate the guide right now. Please try again."}, status_code=500)
     (GENERATED_DIR / f"{guide['slug']}.json").write_text(json.dumps(guide, indent=2))
     return {"slug": guide["slug"], "url": f"/guides/{guide['slug']}", "guide": guide}

@@ -397,32 +397,49 @@ def _head_check(url: str) -> dict:
         return {"url": url, "status": None, "error": str(e)[:200]}
 
 
+def _model_chain() -> list[str]:
+    """Primary model plus fallbacks, tried in order when a model is unavailable.
+
+    Provider 503s are explicitly demand spikes ("high demand ... temporary"),
+    and availability flaps per model within minutes, so a single user request
+    should ride across models instead of dying on the first spike.
+    """
+    primary = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+    fallbacks = [m.strip() for m in os.environ.get(
+        "GEMINI_MODEL_FALLBACKS", "gemini-3.6-flash,gemini-3.5-flash").split(",") if m.strip()]
+    chain = [primary] + [m for m in fallbacks if m != primary]
+    return chain
+
+
 def _llm(prompt: str) -> str:
-    """Call the configured LLM. Raises RuntimeError with a clear message if unconfigured.
-    Retried once on transient network errors."""
+    """Call the configured LLM, riding across the model chain on transient
+    failures (network errors, 5xx, empty responses). Raises a sanitized
+    RuntimeError - never leaks endpoint URLs or exception internals."""
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
-    last_exc = None
-    for attempt in range(3):
-        try:
-            return _llm_once(prompt, provider)
-        except NETWORK_EXC as e:
-            last_exc = e
-            log.warning("LLM call network error (attempt %d): %r", attempt + 1, e)
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code < 500:
-                raise
-            last_exc = e
-            log.warning("LLM call server error %d (attempt %d)", e.response.status_code, attempt + 1)
-        time.sleep(1.5 * (attempt + 1))
-    raise RuntimeError(f"LLM call failed after retries: {last_exc}")
+    models = _model_chain() if provider == "gemini" else [None]
+    for model in models:
+        for attempt in range(2):
+            try:
+                return _llm_once(prompt, provider, model=model)
+            except NETWORK_EXC as e:
+                log.warning("LLM network error (model=%s attempt %d): %r", model, attempt + 1, e)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code < 500:
+                    raise
+                log.warning("LLM server error %d (model=%s attempt %d)",
+                            e.response.status_code, model, attempt + 1)
+            except (KeyError, IndexError, ValueError) as e:
+                log.warning("LLM empty/unparseable response (model=%s attempt %d): %r", model, attempt + 1, e)
+            time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError("LLM_UNAVAILABLE")
 
 
-def _llm_once(prompt: str, provider: str) -> str:
+def _llm_once(prompt: str, provider: str, model: str | None = None) -> str:
     if provider == "gemini":
         key = os.environ.get("GEMINI_API_KEY")
         if not key:
             raise RuntimeError("GEMINI_API_KEY is not configured; live guide generation is unavailable.")
-        model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+        model = model or os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
         r = httpx.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
             headers={"x-goog-api-key": key, "Content-Type": "application/json"},
