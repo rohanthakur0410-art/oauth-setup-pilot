@@ -8,6 +8,7 @@ Built for the Composio APM Integrations take-home assignment.
 
 ## Links
 
+- Live demo (Render free plan): https://oauth-setup-pilot.onrender.com
 - Source repository: https://github.com/rohanthakur0410-art/oauth-setup-pilot
 
 ## Quickstart (local)
@@ -35,7 +36,7 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 
 ## Deploy (Render, free plan)
 
-`render.yaml` is a blueprint for a free Render web service (Python, `uvicorn app.main:app`). Set `GEMINI_API_KEY` (and optionally `BRAVE_API_KEY`) in the Render dashboard - never in the repo. Free-plan caveats: the service spins down after 15 idle minutes (about a minute to spin back up) and generated guides are cached on an ephemeral filesystem, so they vanish on restart. The pre-built library lives in the repo and is unaffected.
+`render.yaml` is a blueprint for a free Render web service (Python, `uvicorn app.main:app`), and the demo is deployed from it at the link above ($0/month free instance - watch the dashboard default, which preselects a paid plan). Set `GEMINI_API_KEY` (and optionally `BRAVE_API_KEY`) in the Render dashboard - never in the repo. Free-plan caveats: the service spins down after 15 idle minutes (about a minute to spin back up) and generated guides are cached on an ephemeral filesystem, so they vanish on restart. The pre-built library lives in the repo and is unaffected.
 
 ## Key decisions
 
@@ -64,7 +65,7 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 ## Limitations
 
 - Live generation quality depends on the search backend and the fetched pages; sites that block bots or render docs client-side yield thin evidence, which the guide will show as uncertainties.
-- Hosted LLM availability is not guaranteed at any moment. On 2026-10-20 the Gemini API intermittently returned 429, 503, empty responses, and read timeouts; full live runs succeeded earlier that day (figma.com, resend.com), while a later unfamiliar-app run (Spotify) produced an honest partial guide and its bounded retry failed on upstream errors. If a live run fails, retry later or switch `LLM_PROVIDER` - the pre-built library is unaffected.
+- Hosted LLM availability is not guaranteed at any moment. On 2026-10-20 the Gemini API intermittently returned 429, 503, empty responses, and read timeouts; full live runs succeeded earlier that day (figma.com, resend.com), while a later unfamiliar-app run (Spotify) produced an honest partial guide and its bounded retry failed on upstream errors. The deployed demo was verified the same day: health, library and guide pages all live. On the deployed instance, gemini-3.8-flash returned a clear 503 retryable error in the UI, so the deployment currently runs GEMINI_MODEL=gemini-3.6-flash (dashboard env only), on which a fresh unfamiliar-app run (Spotify) passed end to end - official docs discovered, guide generated, every evidence entry citing a fetched page, unknowns labelled. If a live run fails, retry later or switch `LLM_PROVIDER` - the pre-built library is unaffected.
 - The agent cannot log into provider consoles, so "attempted setup" is limited to unauthenticated reachability checks; pre-requisites inside consoles (e.g. Slack's per-app queue estimate) are out of reach without accounts.
 - Generated-guide caching uses local disk, which is ephemeral on free hosting.
 - No user authentication; `/api/generate` is guarded only by a per-IP allowance (5 generations / 10 minutes) and a small global concurrency cap to protect the LLM budget. Fine for a take-home demo, not for public production use.
