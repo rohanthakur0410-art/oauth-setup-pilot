@@ -35,22 +35,31 @@
 </section>
 
 <script>
+const stages = [[0, '> searching official documentation...'], [8000, '> fetching and reading pages...'], [25000, '> drafting the guide...'], [55000, '> verifying claims against fetched pages...']];
+let timers = [];
+function setStage(st, ms) {
+  timers.push(setTimeout(() => { st.innerHTML = stages.filter(s => s[0] <= ms).slice(-1)[0][1] + ' <span class="dots"><span>.</span><span>.</span><span>.</span></span>'; }, ms));
+}
 async function generate() {
   const q = document.getElementById('q').value.trim();
   const st = document.getElementById('status');
   const btn = document.getElementById('go');
-  if (!q) { st.textContent = 'enter an app name or website'; return; }
-  btn.disabled = true;
-  st.textContent = '> searching official docs, fetching pages, drafting guide (30-90s)...';
+  if (!q) { st.className = 'status error'; st.textContent = '> enter an app name or website first'; return; }
+  btn.disabled = true; btn.textContent = 'running';
+  st.className = 'status';
+  stages.forEach(s => setStage(st, s[0]));
   try {
     const r = await fetch('/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query: q})});
     const data = await r.json();
-    if (data.url) { window.location = data.url; return; }
-    st.textContent = '> failed: ' + (data.error || r.status);
+    if (data.url) { st.textContent = '> done - opening guide'; window.location = data.url; return; }
+    st.className = 'status error';
+    st.innerHTML = '> ' + (data.error || ('HTTP ' + r.status)) + ' <a href="#" onclick="generate(); return false;">retry</a>';
   } catch (e) {
-    st.textContent = '> request failed: ' + e;
+    st.className = 'status error';
+    st.innerHTML = '> network request failed - check your connection. <a href="#" onclick="generate(); return false;">retry</a>';
   }
-  btn.disabled = false;
+  timers.forEach(clearTimeout); timers = [];
+  btn.disabled = false; btn.textContent = 'run';
 }
 document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
 function filterGuides() {

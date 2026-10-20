@@ -102,3 +102,26 @@ ul.uncertain li { color: #444; }
   table.lib td.setup::before { content: "setup  "; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink); opacity: .55; }
   table.lib td.wait::before { content: "wait  "; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink); opacity: .55; }
 }
+
+/* design-system consistency + interaction states */
+:root { --radius: 6px; --radius-sm: 4px; --t: 150ms ease; }
+input, button { transition: border-color var(--t), background var(--t), color var(--t), opacity var(--t); }
+a { transition: color var(--t); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
+.genrow button:hover:not(:disabled) { background: #000; }
+table.lib tr.row { transition: background var(--t); }
+
+/* loading + error states */
+.status.error { color: var(--hard); }
+.status.error a { font-family: var(--mono); }
+.dots span { animation: blink 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+/* subtle entry polish */
+main > *:first-child, .gen, table.lib, article.guide > * { animation: rise .35s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, .dots span { animation: none !important; transition: none !important; }
+}

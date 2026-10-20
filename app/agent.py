@@ -18,6 +18,10 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse, parse_qs, unquote
 
 import httpx
+import logging
+import zlib
+
+log = logging.getLogger("agent")
 
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
 FETCH_CAP = 9000  # chars of page text kept per fetched doc
@@ -187,9 +191,14 @@ def _is_public_url(url: str) -> bool:
     if h.scheme not in ("http", "https") or not h.netloc:
         return False
     host = h.hostname or ""
-    try:
-        infos = socket.getaddrinfo(host, None)
-    except Exception:
+    infos = None
+    for _attempt in range(3):  # transient DNS blips must not silently kill research
+        try:
+            infos = socket.getaddrinfo(host, None)
+            break
+        except Exception:
+            time.sleep(0.4)
+    if infos is None:
         return False
     for info in infos:
         ip = ipaddress.ip_address(info[4][0])
@@ -198,12 +207,68 @@ def _is_public_url(url: str) -> bool:
     return True
 
 
+class TransientFetchError(Exception):
+    """All attempts failed with network-level errors (DNS/connect/timeout).
+    Distinct from 'page missing/unusable' so callers can tell a temporary
+    network problem from documentation that genuinely was not found."""
+
+
+NETWORK_EXC = (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout,
+               httpx.WriteTimeout, httpx.PoolTimeout, httpx.ReadError,
+               httpx.WriteError, httpx.RemoteProtocolError,
+               OSError, TimeoutError)
+
+
 def _safe_get(url: str, timeout: int = 25) -> httpx.Response | None:
     """GET with manual redirect following, re-checking every hop against the
-    SSRF guard, and a hard cap on downloaded bytes."""
+    SSRF guard, and a hard cap on downloaded bytes. Retried on transient
+    network/DNS errors, which are common on shared egress. Raises
+    TransientFetchError when every attempt failed at the network level;
+    returns None for non-network outcomes (blocked, oversized, bad hop)."""
+    net_exc: Exception | None = None
+    for attempt in range(3):
+        try:
+            r = _safe_get_once(url, timeout)
+        except NETWORK_EXC as e:
+            net_exc = e
+            r = None
+        if r is not None:
+            return r
+        time.sleep(0.5 * (attempt + 1))
+    if net_exc is not None:
+        raise TransientFetchError(f"network error fetching {url}: {net_exc}")
+    return None
+
+
+def _decode_body(raw: bytes, encoding: str) -> bytes:
+    """Tolerant body decoding. Some doc sites/CDN edges mislabel compression
+    (e.g. Content-Encoding: gzip with a zlib or raw-deflate body), which makes
+    httpx's automatic decoding fail. Try the advertised encoding first, then
+    fall back through the common deflate variants."""
+    enc = (encoding or "").lower()
+    if "gzip" in enc:
+        try:
+            return zlib.decompress(raw, 16 + zlib.MAX_WBITS)
+        except zlib.error:
+            pass  # fall through to the deflate variants
+    if "deflate" in enc or "gzip" in enc:
+        for wbits in (zlib.MAX_WBITS, -zlib.MAX_WBITS):
+            try:
+                return zlib.decompress(raw, wbits)
+            except zlib.error:
+                continue
+        raise httpx.DecodingError("body not decodable as advertised deflate/gzip")
+    if "br" in enc:
+        import brotli  # installed with httpx's brotli extra
+        return brotli.decompress(raw)
+    return raw
+
+
+def _safe_get_once(url: str, timeout: int = 25) -> httpx.Response | None:
     current = url
     for _ in range(MAX_REDIRECTS + 1):
         if not _is_public_url(current):
+            log.warning("fetch blocked by SSRF guard: %s", current)
             return None
         try:
             with httpx.stream("GET", current, headers=UA, timeout=timeout,
@@ -211,19 +276,32 @@ def _safe_get(url: str, timeout: int = 25) -> httpx.Response | None:
                 if r.is_redirect:
                     loc = r.headers.get("location")
                     if not loc:
+                        log.warning("redirect without Location: %s", current)
                         return None
                     current = urljoin(current, loc)
                     continue
                 chunks, total = [], 0
-                for chunk in r.iter_bytes(65536):
+                for chunk in r.iter_raw(65536):
                     total += len(chunk)
                     if total > MAX_BYTES:
+                        log.warning("response too large, aborted: %s", current)
                         return None
                     chunks.append(chunk)
-                body = b"".join(chunks)
-                return httpx.Response(r.status_code, headers=r.headers, content=body)
-        except Exception:
+                raw = b"".join(chunks)
+                body = _decode_body(raw, r.headers.get("content-encoding", ""))
+                if len(body) > MAX_BYTES:
+                    log.warning("decoded body too large, aborted: %s", current)
+                    return None
+                headers = dict(r.headers)
+                headers.pop("content-encoding", None)
+                headers.pop("content-length", None)
+                return httpx.Response(r.status_code, headers=headers, content=body)
+        except NETWORK_EXC:
+            raise
+        except Exception as e:
+            log.warning("fetch failed %s: %r", current, e)
             return None
+    log.warning("too many redirects from %s", url)
     return None
 
 
@@ -386,8 +464,13 @@ def investigate(query: str) -> dict:
         ordered.append(u)
 
     fetched: dict[str, str] = {}
+    net_fail = False
     for u in ordered:
-        txt = _fetch_text(u)
+        try:
+            txt = _fetch_text(u)
+        except TransientFetchError:
+            net_fail = True
+            continue
         if txt and len(txt) > 400:
             fetched[u] = txt
         if len(fetched) >= MAX_DOCS:
@@ -400,7 +483,10 @@ def investigate(query: str) -> dict:
     if sum(1 for t in fetched.values() if _oauth_mentions(t) >= 3) < 2 and site:
         extra: list[str] = []
         for u in list(fetched):
-            r = _safe_get(u, timeout=20)
+            try:
+                r = _safe_get(u, timeout=20)
+            except TransientFetchError:
+                continue
             if r is None or "text/html" not in r.headers.get("content-type", ""):
                 continue
             p = _TextExtractor()
@@ -415,12 +501,23 @@ def investigate(query: str) -> dict:
             if len(extra) >= 6:
                 break
         for v in extra[:3]:
-            t = _fetch_text(v)
+            try:
+                t = _fetch_text(v)
+            except TransientFetchError:
+                continue
             if t and len(t) > 400:
                 fetched[v] = t
 
     if not fetched:
-        raise RuntimeError(f"Could not fetch any usable documentation for '{query}'.")
+        if net_fail:
+            raise RuntimeError(
+                f"Temporary network problem: could not reach any documentation for '{query}'. "
+                "Requests to candidate documentation pages failed at the network level "
+                "(DNS/connect/timeout). This is usually transient - wait a moment and retry.")
+        raise RuntimeError(
+            f"Could not fetch any usable documentation for '{query}'. "
+            "The app's docs may be unreachable from this server, behind JavaScript rendering, "
+            "or the app name may not have resolved to an official site. Check the name/URL and retry.")
 
     docs_block = "\n\n".join(f"--- URL: {u} ---\n{t}" for u, t in fetched.items())
     raw = _llm(PROMPT.format(query=query, site=site, docs=docs_block))
