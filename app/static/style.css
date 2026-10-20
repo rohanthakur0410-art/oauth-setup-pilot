@@ -91,7 +91,14 @@ ul.uncertain li { color: #444; }
 .brand { white-space: nowrap; }
 .ratewrap { white-space: nowrap; display: inline-block; }
 @media (max-width: 640px) {
-  table.lib { font-size: 12.5px; }
-  .rate { font-size: 10.5px; }
-  table.lib th { padding-right: 6px; }
+  table.lib tr:not(.row) { display: none; }
+  table.lib, table.lib tbody, table.lib td { display: block; }
+  table.lib tr.row td { width: auto; }
+  table.lib tr.row { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  table.lib tr.row td { border: 0; padding: 1px 0; }
+  table.lib td.app { grid-column: 1; }
+  table.lib td:nth-child(2) { grid-column: 2; text-align: right; align-self: start; }
+  table.lib td.setup, table.lib td.wait { grid-column: 1 / -1; font-size: 12px; }
+  table.lib td.setup::before { content: "setup  "; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink); opacity: .55; }
+  table.lib td.wait::before { content: "wait  "; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink); opacity: .55; }
 }

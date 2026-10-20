@@ -21,8 +21,8 @@
     <tr class="row" onclick="window.location='/guides/{{ g.slug }}'">
       <td class="app"><a href="/guides/{{ g.slug }}">{{ g.app_name }}</a></td>
       <td><span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span></td>
-      <td class="meta">{{ g.setup_time }}</td>
-      <td class="meta">{{ g.approval.wait }}</td>
+      <td class="meta setup">{{ g.setup_time }}</td>
+      <td class="meta wait">{{ g.approval.wait }}</td>
     </tr>
     {% endfor %}
   </table>
