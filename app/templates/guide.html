@@ -4,65 +4,179 @@
 <article class="guide">
   <div class="guide-head">
     <h1>{{ g.app_name }}</h1>
-    <span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span>
-    {% if g.generated %}<span class="gen-flag">agent-generated</span>{% endif %}
+    {% if g.generated %}<span class="badge b-unknown">agent-generated</span>{% else %}<span class="badge b-docs">reviewed guide</span>{% endif %}
   </div>
-  <p class="reason">{{ g.difficulty_reason }}</p>
 
-  <div class="verdicts">
-    <div class="verdict"><label>hands-on setup</label><strong>{{ g.setup_time }}</strong></div>
-    <div class="verdict"><label>approval</label><strong>{% if g.approval.required is sameas true %}Yes - {{ g.approval.kind }}{% elif g.approval.required is sameas false %}No{% else %}Unverified{% endif %}</strong></div>
-    <div class="verdict"><label>expected wait</label><strong>{{ g.approval.wait }}</strong></div>
-    <div class="verdict"><label>register at</label><strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
+  {# 1. Provider, overview, research status #}
+  <section class="gsec" id="overview">
+    <p class="summary">{{ g.summary }}</p>
+    <p class="meta-line">
+      {% if g.generated %}Researched live from fetched official pages{% else %}Library guide, source-validated {{ g.last_validated or '' }}{% endif %}
+      {% if g.generation_seconds %} &middot; generated in {{ g.generation_seconds }}s via {{ g.llm_provider }}{% endif %}
+    </p>
+    {% if g.approval.required is not sameas true and g.approval.required is not sameas false or g.difficulty == 'unknown' %}
+    <p class="warnblock"><strong>Incomplete guide.</strong> The documentation fetched did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the items under Evidence &amp; uncertainties before building on it.</p>
+    {% endif %}
+  </section>
+
+  {# 2 + 3. The four independent dimensions #}
+  <section class="gsec" id="ratings">
+    <h2>Ratings - four separate dimensions</h2>
+    <div class="verdicts">
+      <div class="verdict">
+        <label>setup difficulty</label>
+        <strong><span class="dot {{ g.difficulty }}"></span>{{ g.difficulty }}</strong>
+        <span class="vsub">technical complexity of configuration</span>
+      </div>
+      <div class="verdict">
+        <label>hands-on effort</label>
+        <strong>{{ g.setup_time }}</strong>
+        <span class="vsub">your time configuring; never estimated when undocumented</span>
+      </div>
+      <div class="verdict">
+        <label>approval requirement</label>
+        <strong><span class="badge b-{{ (g.approval.requirement or 'unknown') | replace('-', '') }}">{{ g.approval.requirement or 'unknown' }}</span></strong>
+        <span class="vsub">{{ g.approval.kind }}</span>
+      </div>
+      <div class="verdict">
+        <label>external wait</label>
+        <strong>{{ g.approval.wait }}</strong>
+        <span class="vsub">{% if g.approval.wait_basis == 'documented' %}stated in official docs{% elif g.approval.wait_basis == 'estimate' %}estimate, not documented{% elif g.approval.wait_basis == 'none' %}no waiting period{% else %}not established{% endif %}</span>
+      </div>
+    </div>
+    <p class="reason">{{ g.difficulty_reason }}</p>
+    {% if g.approval.notes %}<p class="noteblock"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
+    <div class="verdict verdict-wide">
+      <label>register at</label>
+      <strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
       {% if g.console_check %}<span class="check">unauthenticated check: HTTP {{ g.console_check.status or 'failed' }}{% if g.console_check.redirect %} &rarr; login/redirect{% endif %}</span>{% endif %}
     </div>
-  </div>
+  </section>
 
-  {% if g.approval.required is not sameas true and g.approval.required is not sameas false or g.difficulty == 'unknown' %}
-  <p class="warnblock"><strong>Incomplete guide.</strong> The documentation the agent could fetch did not establish key approval facts. Treat this as orientation, not a working setup recipe - verify the items under Uncertainties before building on it.</p>
-  {% endif %}
-  {% if g.generated %}
-  <p class="meta"><span class="meta-line">cached on the demo server; may not survive a restart</span> &middot; <a href="/guides/{{ g.slug }}/export">Download as Markdown</a> for a permanent copy.</p>
-  {% else %}
-  <p class="meta"><a href="/guides/{{ g.slug }}/export">Download as Markdown</a></p>
-  {% endif %}
-  <p class="summary">{{ g.summary }}</p>
-  {% if g.approval.notes %}<p class="noteblock"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
+  {# 4. Prerequisites #}
+  <section class="gsec" id="prerequisites">
+    <h2>Prerequisites &amp; required permissions</h2>
+    <ul>{% for x in g.requirements %}<li>{{ x }}</li>{% endfor %}</ul>
+  </section>
 
-  <h2>Setup steps</h2>
-  <ol class="steps">
-    {% for s in g.steps %}<li><span class="st">{{ s.title }}</span><br><span class="sd">{{ s.detail }}</span></li>{% endfor %}
-  </ol>
+  {# 5. Checklist #}
+  <section class="gsec" id="checklist">
+    <h2>Setup checklist</h2>
+    <p class="meta-line" id="check-progress">0 of {{ g.steps | length }} done - progress is saved in this browser only.</p>
+    <ol class="steps checklist" data-slug="{{ g.slug }}">
+      {% for s in g.steps %}
+      <li class="citem">
+        <label class="chead">
+          <input type="checkbox" class="cbox" data-step="{{ loop.index }}">
+          <span class="st">{{ s.title }}</span>
+        </label>
+        <details class="cdetail" {% if loop.first %}open{% endif %}>
+          <summary>details</summary>
+          <p class="sd">{{ s.detail }}</p>
+        </details>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
 
-  <div class="cols">
-    <div><h2>Requirements</h2><ul>{% for x in g.requirements %}<li>{{ x }}</li>{% endfor %}</ul></div>
-    <div><h2>Nuances that bite</h2><ul>{% for x in g.nuances %}<li>{{ x }}</li>{% endfor %}</ul></div>
-  </div>
-
-  {% if g.common_blockers %}<h2>Common blockers</h2><ul>{% for x in g.common_blockers %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
-
-  <div class="cols">
-    <div><h2>What an agent can do for you</h2><ul>{% for x in g.agent_can_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
-    <div><h2>Where you take over</h2><ul>{% for x in g.human_must_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
-  </div>
-
-  <h2>Evidence</h2>
-  <p class="legend"><span class="ev docs-supported">docs-supported</span> stated in the linked official page &middot; <span class="ev tested">tested</span> we attempted it &middot; anything unverifiable is under Uncertainties, not here.</p>
-  <ul class="evidence">
-    {% for e in g.evidence %}
-    <li><span class="ev {{ e.status }}">{{ e.status }}</span> {{ e.claim }} <a href="{{ e.source }}">source</a></li>
-    {% endfor %}
-  </ul>
-
-  {% if g.uncertainties %}
-  <h2>Uncertainties</h2>
-  <ul class="uncertain">{% for x in g.uncertainties %}<li>{{ x }}</li>{% endfor %}</ul>
+  {# 6. Blockers #}
+  {% if g.common_blockers %}
+  <section class="gsec" id="blockers">
+    <h2>Common blockers &amp; solutions</h2>
+    <ul class="blockers">{% for x in g.common_blockers %}<li>{{ x }}</li>{% endfor %}</ul>
+  </section>
   {% endif %}
 
-  {% if g.sources_fetched %}
-  <h2>Pages the agent fetched</h2>
-  <ul class="srcs">{% for u in g.sources_fetched %}<li><a href="{{ u }}">{{ u }}</a></li>{% endfor %}</ul>
-  <p class="meta-line">generated in {{ g.generation_seconds }}s via {{ g.llm_provider }}</p>
-  {% endif %}
+  {# 7. Nuances #}
+  <section class="gsec" id="nuances">
+    <h2>Provider-specific nuances</h2>
+    <ul>{% for x in g.nuances %}<li>{{ x }}</li>{% endfor %}</ul>
+  </section>
+
+  {# 8. Evidence, sources, uncertainties #}
+  <section class="gsec" id="evidence">
+    <h2>Evidence, sources &amp; uncertainties</h2>
+    <p class="legend"><span class="ev docs-supported">docs-supported</span> stated in the linked official page &middot; <span class="ev tested">tested</span> we attempted it &middot; anything unverifiable is listed under Uncertainties, not passed off as fact.</p>
+    <ul class="evidence">
+      {% for e in g.evidence %}
+      <li><span class="ev {{ e.status }}">{{ e.status }}</span> {{ e.claim }} <a href="{{ e.source }}">source</a></li>
+      {% endfor %}
+    </ul>
+    {% if g.uncertainties %}
+    <h3 class="subhead">Unresolved uncertainties</h3>
+    <ul class="uncertain">{% for x in g.uncertainties %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if g.sources_fetched %}
+    <h3 class="subhead">Pages the agent fetched</h3>
+    <ul class="srcs">{% for u in g.sources_fetched %}<li><a href="{{ u }}">{{ u }}</a></li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  {# 9. Agent vs human #}
+  <section class="gsec" id="division">
+    <h2>What the agent can do vs what you must do</h2>
+    <div class="cols">
+      <div><h3 class="subhead">Agent can do</h3><ul>{% for x in g.agent_can_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      <div><h3 class="subhead">You must do</h3><ul>{% for x in g.human_must_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
+    </div>
+  </section>
+
+  <section class="gsec sharebar" id="share">
+    <h2>Share &amp; export</h2>
+    <div class="shareactions">
+      <button class="btn" id="copylink" onclick="copyLink(this)">Copy link</button>
+      <a class="btn secondary" href="/guides/{{ g.slug }}/export" download>Download Markdown</a>
+    </div>
+    <p class="meta-line" id="copy-feedback">
+      {% if g.generated %}This link is served from the demo instance's saved copy; it survives restarts but may be lost when the demo is redeployed. The Markdown export is the permanent, self-contained snapshot.{% else %}Library guide link - stable. The Markdown export is a self-contained copy.{% endif %}
+    </p>
+  </section>
 </article>
+
+<script>
+// checklist state, per guide, in this browser only
+(function () {
+  const slug = document.querySelector('.checklist').dataset.slug;
+  const key = 'osp-checklist-' + slug;
+  const boxes = Array.from(document.querySelectorAll('.cbox'));
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+  function paint() {
+    let done = 0;
+    boxes.forEach(b => {
+      b.checked = !!state[b.dataset.step];
+      b.closest('.citem').classList.toggle('done', b.checked);
+      if (b.checked) done++;
+    });
+    document.getElementById('check-progress').textContent =
+      done + ' of ' + boxes.length + ' done - progress is saved in this browser only.';
+  }
+  boxes.forEach(b => b.addEventListener('change', () => {
+    state[b.dataset.step] = b.checked;
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch (e) {}
+    paint();
+  }));
+  paint();
+})();
+
+function copyLink(btn) {
+  const url = window.location.origin + window.location.pathname;
+  const fb = document.getElementById('copy-feedback');
+  const orig = fb.dataset.orig || fb.textContent;
+  fb.dataset.orig = orig;
+  function ok() { btn.textContent = 'Copied'; fb.textContent = 'Link copied to clipboard. ' + orig; setTimeout(() => { btn.textContent = 'Copy link'; }, 1800); }
+  function fail() { fb.textContent = 'Copy failed - select the address bar and copy manually. ' + orig; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(ok, () => legacy(url) ? ok() : fail());
+  } else if (!legacy(url)) { fail(); }
+  function legacy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let okc = false;
+    try { okc = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); return okc;
+  }
+}
+</script>
 {% endblock %}

@@ -6,17 +6,48 @@
   "difficulty": "hard",
   "difficulty_reason": "Creating the app is easy, but commercial distribution requires a Marketplace review with up to 10 business days of preliminary feedback and up to 10 weeks of functional review - plus a hard prerequisite of 10+ active workspaces.",
   "setup_time": "~30 minutes to create and configure; weeks to months to get listed",
-  "approval": {"required": true, "kind": "Slack Marketplace review (required for commercial distribution)", "wait": "up to 10 business days (preliminary) + up to 10 weeks (functional, new submissions)", "notes": "Review is only triggered when you submit to the Marketplace. Slack states: in order to commercially distribute your app, you must submit it to the Marketplace. Building and installing on your own workspaces needs no review."},
+  "approval": {
+    "required": true,
+    "kind": "Slack Marketplace review (required for commercial distribution)",
+    "wait": "up to 10 business days (preliminary) + up to 10 weeks (functional, new submissions)",
+    "notes": "Review is only triggered when you submit to the Marketplace. Slack states: in order to commercially distribute your app, you must submit it to the Marketplace. Building and installing on your own workspaces needs no review.",
+    "requirement": "conditional",
+    "wait_basis": "documented"
+  },
   "summary": "The OAuth app itself is quick to create at api.slack.com/apps. The real cost is distribution: Slack requires Marketplace submission for commercial distribution, gates submission on 10+ active workspaces, demands test credentials and ideally a demo video, and the functional review alone can take up to 10 weeks for a new app.",
   "steps": [
-    {"title": "Create the app", "detail": "Go to api.slack.com/apps and create a new app in your development workspace. Configure the OAuth scopes your features actually use."},
-    {"title": "Enable public distribution", "detail": "Follow Slack's guide to distributing apps publicly - this is a stated prerequisite before you can even submit for Marketplace review."},
-    {"title": "Reach the install prerequisite", "detail": "Your app must be installed on 10 or more active workspaces (used in the past 28 days, not sandboxes) and tested on them. Apps below this bar are blocked from submitting."},
-    {"title": "Prepare review material", "detail": "Provide test account credentials (with dummy data) for your service and any connected third-party service; a short video showing installation, the full OAuth flow, setup, and uninstallation is requested to speed up review."},
-    {"title": "Submit from app settings", "detail": "Submit from the Submit to the Slack Marketplace section of your app's configuration page. Automated checks run first; fix what they flag, then your app enters the manual review."},
-    {"title": "Survive the two-stage review", "detail": "Preliminary review (listing info, scopes rationale, installability) takes up to 10 business days and your queue position resets on every resubmission at this stage. Functional review (a reviewer installs and tests) takes up to 10 weeks for new submissions."}
+    {
+      "title": "Create the app",
+      "detail": "Go to api.slack.com/apps and create a new app in your development workspace. Configure the OAuth scopes your features actually use."
+    },
+    {
+      "title": "Enable public distribution",
+      "detail": "Follow Slack's guide to distributing apps publicly - this is a stated prerequisite before you can even submit for Marketplace review."
+    },
+    {
+      "title": "Reach the install prerequisite",
+      "detail": "Your app must be installed on 10 or more active workspaces (used in the past 28 days, not sandboxes) and tested on them. Apps below this bar are blocked from submitting."
+    },
+    {
+      "title": "Prepare review material",
+      "detail": "Provide test account credentials (with dummy data) for your service and any connected third-party service; a short video showing installation, the full OAuth flow, setup, and uninstallation is requested to speed up review."
+    },
+    {
+      "title": "Submit from app settings",
+      "detail": "Submit from the Submit to the Slack Marketplace section of your app's configuration page. Automated checks run first; fix what they flag, then your app enters the manual review."
+    },
+    {
+      "title": "Survive the two-stage review",
+      "detail": "Preliminary review (listing info, scopes rationale, installability) takes up to 10 business days and your queue position resets on every resubmission at this stage. Functional review (a reviewer installs and tests) takes up to 10 weeks for new submissions."
+    }
   ],
-  "requirements": ["A Slack workspace you can develop in", "A fully functional, publicly available, installable app", "10+ active (non-sandbox) workspaces with the app installed and tested", "Test account credentials with dummy data for reviewers", "A demo video (strongly recommended)"],
+  "requirements": [
+    "A Slack workspace you can develop in",
+    "A fully functional, publicly available, installable app",
+    "10+ active (non-sandbox) workspaces with the app installed and tested",
+    "Test account credentials with dummy data for reviewers",
+    "A demo video (strongly recommended)"
+  ],
   "nuances": [
     "Only scopes your app already uses will be reviewed - do not request scopes for future features.",
     "Legacy/restricted scopes and extensive-access scopes (admin.*, identity.*, search:read, workflow.steps:execute, triggers:*) are not accepted for listing.",
@@ -24,19 +55,64 @@
     "Apps that export/backup messages, train LLMs on Slack data, enable financial transactions, or lack functionality inside Slack are not accepted at all.",
     "Slack cannot access your test Slack workspaces - give them a way to install the app themselves."
   ],
-  "common_blockers": ["Fewer than 10 active workspaces - submission is hard-blocked", "App still in beta or buggy - returned without full review", "Missing test credentials for a paid service", "Requesting scopes for features that are not built yet"],
-  "agent_can_do": ["Map your feature list to the minimum Slack scopes", "Draft the listing copy and scope justifications", "Script the OAuth installation flow for your demo video", "Audit your app against Slack's not-accepted list before you submit"],
-  "human_must_do": ["Grow to 10+ active workspaces", "Create and hand over test accounts", "Record the demo video", "Submit and respond to review feedback"],
-  "evidence": [
-    {"claim": "In order to commercially distribute your app, you must submit it to the Marketplace; listing involves manual review by the Slack Marketplace team.", "source": "https://docs.slack.dev/slack-marketplace/distributing-your-app-in-the-slack-marketplace", "status": "docs-supported"},
-    {"claim": "Preliminary review takes up to 10 business days; functional review takes up to 10 weeks for new submissions and 6 weeks for published apps resubmitting changes.", "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide", "status": "docs-supported"},
-    {"claim": "Apps installed on fewer than 10 active workspaces (used in the past 28 days, not sandboxes) are blocked from submitting to the Marketplace.", "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide", "status": "docs-supported"},
-    {"claim": "Reviewers need test account credentials for your service and connected third parties; a video demo of installation, OAuth flow, setup and uninstallation helps the functional review.", "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide", "status": "docs-supported"},
-    {"claim": "Only scopes already available in the app can be reviewed; legacy/restricted scopes such as admin.*, identity.*, search:read and workflow.steps:execute are not accepted.", "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide", "status": "docs-supported"},
-    {"claim": "Resubmitting during preliminary review resets your place in the queue.", "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide", "status": "docs-supported"},
-    {"claim": "The app console at https://api.slack.com/apps returns HTTP 200 unauthenticated (observed 2026-10-20), though app management itself requires a Slack login.", "source": "https://api.slack.com/apps", "status": "tested"}
+  "common_blockers": [
+    "Fewer than 10 active workspaces - submission is hard-blocked",
+    "App still in beta or buggy - returned without full review",
+    "Missing test credentials for a paid service",
+    "Requesting scopes for features that are not built yet"
   ],
-  "uncertainties": ["Actual review turnaround varies with queue volume; Slack publishes estimates on the submission page of each app's settings, which requires an app to view."],
+  "agent_can_do": [
+    "Map your feature list to the minimum Slack scopes",
+    "Draft the listing copy and scope justifications",
+    "Script the OAuth installation flow for your demo video",
+    "Audit your app against Slack's not-accepted list before you submit"
+  ],
+  "human_must_do": [
+    "Grow to 10+ active workspaces",
+    "Create and hand over test accounts",
+    "Record the demo video",
+    "Submit and respond to review feedback"
+  ],
+  "evidence": [
+    {
+      "claim": "In order to commercially distribute your app, you must submit it to the Marketplace; listing involves manual review by the Slack Marketplace team.",
+      "source": "https://docs.slack.dev/slack-marketplace/distributing-your-app-in-the-slack-marketplace",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Preliminary review takes up to 10 business days; functional review takes up to 10 weeks for new submissions and 6 weeks for published apps resubmitting changes.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Apps installed on fewer than 10 active workspaces (used in the past 28 days, not sandboxes) are blocked from submitting to the Marketplace.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Reviewers need test account credentials for your service and connected third parties; a video demo of installation, OAuth flow, setup and uninstallation helps the functional review.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Only scopes already available in the app can be reviewed; legacy/restricted scopes such as admin.*, identity.*, search:read and workflow.steps:execute are not accepted.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Resubmitting during preliminary review resets your place in the queue.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app console at https://api.slack.com/apps returns HTTP 200 unauthenticated (observed 2026-10-20), though app management itself requires a Slack login.",
+      "source": "https://api.slack.com/apps",
+      "status": "tested"
+    }
+  ],
+  "uncertainties": [
+    "Actual review turnaround varies with queue volume; Slack publishes estimates on the submission page of each app's settings, which requires an app to view."
+  ],
   "generated": false,
   "last_validated": "2026-10-20"
 }

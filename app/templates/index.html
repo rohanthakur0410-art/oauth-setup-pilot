@@ -4,29 +4,39 @@
 <p class="lede">Registering a provider OAuth app and getting it <em>approved</em> is the hidden cost of "connect an app". Five providers rated below; type any app and the agent investigates its official docs live, citing every claim and flagging what it could not verify.</p>
 
 <section class="gen">
-  <div class="genrow">
+  <form class="genrow" id="genform">
+    <label class="visually-hidden" for="q">App name or website to investigate</label>
     <input id="q" type="text" placeholder="investigate figma.com" autocomplete="off">
-    <button id="go" onclick="generate()">run</button>
-  </div>
+    <button id="go" type="submit" class="btn primary">run</button>
+  </form>
   <p class="warn">App names or public site URLs only. Never paste keys, tokens, passwords, or personal data - inputs go to a third-party LLM API.</p>
-  <div id="status" class="status"></div>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
 </section>
 
 <section>
-  <h2>Library &mdash; rated guides</h2>
-  <input id="filter" type="text" placeholder="filter" onkeyup="filterGuides()" class="filter">
+  <h2>Library - rated guides</h2>
+  <label class="visually-hidden" for="filter">Filter library apps</label>
+  <input id="filter" type="text" placeholder="filter" oninput="filterGuides()" class="filter">
+  <p id="nomatch" class="nomatch" hidden>No library app matches that filter. Clear it, or investigate the app live above.</p>
+
   <table class="lib" id="grid">
-    <tr><th>app</th><th>rating</th><th>hands-on setup</th><th>approval wait</th></tr>
+    <thead>
+      <tr><th>app</th><th>setup difficulty</th><th>hands-on effort</th><th>approval</th><th>wait</th><th></th></tr>
+    </thead>
+    <tbody>
     {% for g in guides %}
-    <tr class="row" onclick="window.location='/guides/{{ g.slug }}'">
-      <td class="app"><a href="/guides/{{ g.slug }}">{{ g.app_name }}</a></td>
-      <td><span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span></td>
-      <td class="meta setup">{{ g.setup_time }}</td>
-      <td class="meta wait">{{ g.approval.wait }}</td>
+    <tr class="row" data-href="/guides/{{ g.slug }}" tabindex="0" role="link" aria-label="Open {{ g.app_name }} guide">
+      <td class="app" data-label="app"><a href="/guides/{{ g.slug }}">{{ g.app_name }}</a></td>
+      <td data-label="difficulty"><span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span></td>
+      <td class="meta setup" data-label="setup">{{ g.setup_time }}</td>
+      <td class="meta appr" data-label="approval"><span class="badge b-{{ (g.approval.requirement or 'unknown') | replace('-', '') }}">{{ g.approval.requirement or 'unknown' }}</span></td>
+      <td class="meta wait" data-label="wait">{{ g.approval.wait }}</td>
+      <td class="action"><a class="btn small secondary" href="/guides/{{ g.slug }}">View guide</a></td>
     </tr>
     {% endfor %}
+    </tbody>
   </table>
-  <p class="meta-line">easy = no approval wait &middot; medium = optional/short review &middot; hard = mandatory review with a real wait &middot; unknown = fetched docs don't establish it</p>
+  <p class="meta-line">Four dimensions, rated independently: technical setup difficulty &middot; your hands-on time &middot; whether approval is required, conditional, optional or not required &middot; and the external wait. Approval that depends on scopes or distribution is rated conditional, never "free". Unknowns stay unknown.</p>
 </section>
 
 <section>
@@ -35,38 +45,66 @@
 </section>
 
 <script>
-const stages = [[0, '> searching official documentation...'], [8000, '> fetching and reading pages...'], [25000, '> drafting the guide...'], [55000, '> verifying claims against fetched pages...']];
-let timers = [];
-function setStage(st, ms) {
-  timers.push(setTimeout(() => { st.innerHTML = stages.filter(s => s[0] <= ms).slice(-1)[0][1] + ' <span class="dots"><span>.</span><span>.</span><span>.</span></span>'; }, ms));
-}
+let timers = [], elapsedTimer = null;
+function clearTimers() { timers.forEach(clearTimeout); timers = []; if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; } }
 async function generate() {
   const q = document.getElementById('q').value.trim();
   const st = document.getElementById('status');
   const btn = document.getElementById('go');
-  if (!q) { st.className = 'status error'; st.textContent = '> enter an app name or website first'; return; }
+  if (!q) { st.className = 'status error'; st.textContent = 'Enter an app name or website first.'; return; }
   btn.disabled = true; btn.textContent = 'running';
   st.className = 'status';
-  stages.forEach(s => setStage(st, s[0]));
+  const t0 = Date.now();
+  st.innerHTML = 'Investigating <b></b> - searching official docs, reading pages, drafting and verifying claims. This typically takes 30-90 seconds. <span class="elapsed">0s</span>';
+  st.querySelector('b').textContent = q;
+  elapsedTimer = setInterval(() => {
+    const el = st.querySelector('.elapsed');
+    if (el) el.textContent = Math.round((Date.now() - t0) / 1000) + 's';
+  }, 1000);
   try {
     const r = await fetch('/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query: q})});
     const data = await r.json();
-    if (data.url) { st.textContent = '> done - opening guide'; window.location = data.url; return; }
+    if (data.url) { st.textContent = 'Done - opening guide'; window.location = data.url; return; }
     st.className = 'status error';
-    st.innerHTML = '> ' + (data.error || ('HTTP ' + r.status)) + ' <a href="#" onclick="generate(); return false;">retry</a>';
+    st.innerHTML = '';
+    st.appendChild(document.createTextNode((data.error || ('HTTP ' + r.status)) + ' '));
+    const a = document.createElement('a');
+    a.href = '#'; a.textContent = 'retry';
+    a.onclick = (e) => { e.preventDefault(); generate(); };
+    st.appendChild(a);
   } catch (e) {
     st.className = 'status error';
-    st.innerHTML = '> network request failed - check your connection. <a href="#" onclick="generate(); return false;">retry</a>';
+    st.innerHTML = '';
+    st.appendChild(document.createTextNode('Network request failed - check your connection. '));
+    const a = document.createElement('a');
+    a.href = '#'; a.textContent = 'retry';
+    a.onclick = (ev) => { ev.preventDefault(); generate(); };
+    st.appendChild(a);
   }
-  timers.forEach(clearTimeout); timers = [];
+  clearTimers();
   btn.disabled = false; btn.textContent = 'run';
 }
-document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+document.getElementById('genform').addEventListener('submit', e => { e.preventDefault(); generate(); });
+
 function filterGuides() {
   const v = document.getElementById('filter').value.toLowerCase();
+  let visible = 0;
   document.querySelectorAll('#grid tr.row').forEach(c => {
-    c.style.display = c.textContent.toLowerCase().includes(v) ? '' : 'none';
+    const show = c.textContent.toLowerCase().includes(v);
+    c.style.display = show ? '' : 'none';
+    if (show) visible++;
   });
+  document.getElementById('nomatch').hidden = visible !== 0;
 }
+
+// keyboard access for table rows
+document.querySelectorAll('#grid tr.row').forEach(row => {
+  row.addEventListener('click', e => {
+    if (e.target.tagName !== 'A') window.location = row.dataset.href;
+  });
+  row.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location = row.dataset.href; }
+  });
+});
 </script>
 {% endblock %}

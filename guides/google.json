@@ -10,7 +10,9 @@
     "required": true,
     "kind": "brand verification + sensitive/restricted scope verification + possible security assessment",
     "wait": "minutes (brand, automated) / typically 3-5 business days (sensitive scopes) / potentially several weeks (restricted scopes + security assessment)",
-    "notes": "Whether you need verification depends on the scopes you request. Apps left in Testing publishing status (only listed test users) skip verification entirely - that is the right mode while building."
+    "notes": "Whether you need verification depends on the scopes you request. Apps left in Testing publishing status (only listed test users) skip verification entirely - that is the right mode while building.",
+    "requirement": "conditional",
+    "wait_basis": "documented"
   },
   "summary": "Creating an OAuth client in Google Cloud Console is fast; the cost is entirely in scope verification. Publishing to production with only non-sensitive scopes still requires brand verification (Google's automated branding evaluation, usually minutes), unless an exception applies - personal use or staying in Testing publishing status. Sensitive scopes need a verification submission with per-scope justifications and an unlisted YouTube demo video, typically 3-5 business days. Restricted scopes additionally require a permitted application type and an annual third-party security assessment (CASA), which can push the process to several weeks.",
   "steps": [

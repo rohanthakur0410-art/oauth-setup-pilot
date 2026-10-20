@@ -233,9 +233,17 @@ def _discover_docs(site: str) -> list[str]:
     except Exception:
         pass
     host = urlparse(site if site.startswith("http") else f"https://{site}").netloc.replace("www.", "")
+    # Probe common doc locations on each likely developer host. Search engines
+    # often rank marketing pages above docs, so direct probing is the reliable
+    # keyless discovery path.
+    doc_paths = ("/documentation", "/docs", "/docs/oauth", "/docs/authentication",
+                 "/docs/authorization", "/documentation/oauth", "/oauth", "/api/docs")
     for sub in ("developer", "developers", "docs"):
         found.append(f"https://{sub}.{host}/")
-    for path in ("/developers", "/developers/docs", "/docs", "/docs/oauth", "/api/docs"):
+        for path in doc_paths:
+            found.append(f"https://{sub}.{host}{path}")
+    for path in ("/developers", "/developers/docs", "/docs", "/documentation",
+                 "/docs/oauth", "/docs/authentication", "/api/docs"):
         found.append(f"https://{host}{path}")
     return found
 
@@ -463,7 +471,8 @@ Produce a JSON object with EXACTLY these keys:
   "difficulty": "easy" | "medium" | "hard" | "unknown",
   "difficulty_reason": string (one sentence; easy=no approval wait, medium=optional/short review, hard=mandatory review or verification with real wait, unknown=the fetched docs do not establish the approval/review facts needed to rate it),
   "setup_time": string (hands-on time to register the app, e.g. "~15 minutes"; use "unknown" if the fetched docs do not state it - never estimate),
-  "approval": {{"required": true | false | null, "kind": string (e.g. "none", "marketplace review", "scope verification + security assessment", "unknown"), "wait": string (e.g. "none", "3-5 business days", "up to 10 weeks", "unknown"), "notes": string}},
+  "approval": {{"required": true | false | null, "requirement": "required" | "conditional" | "optional" | "not-required" | "unknown", "kind": string (e.g. "none", "marketplace review", "scope verification + security assessment", "unknown"), "wait": string (e.g. "none", "3-5 business days", "up to 10 weeks", "unknown"), "wait_basis": "documented" | "estimate" | "unknown" | "none", "notes": string}},
+  requirement meanings: "required" = a review/verification is mandatory before the OAuth app works for its intended use; "conditional" = it depends on requested scopes, app type, or distribution model (explain the dependency in notes); "optional" = a review exists but the OAuth app works without it; "not-required" = ONLY when the fetched docs explicitly show registration needs no review; "unknown" = the fetched docs do not establish it. wait_basis: "documented" if the wait is stated in the fetched docs, "estimate" if reasoned from partial info, "unknown" if not established, "none" when no wait applies. Never invent a waiting time and never label an app universally approval-free when that holds only for a particular scenario.
   "summary": string (2-3 sentences a developer can act on),
   "steps": [{{"title": string, "detail": string}}],
   "requirements": [string],
@@ -487,8 +496,10 @@ def _honesty_guard(guide: dict, fetched: dict) -> None:
     ap = guide.get("approval") or {}
     if ap.get("required") is False and approval_terms < 3:
         ap["required"] = None
+        ap["requirement"] = "unknown"
         ap["kind"] = "unknown"
         ap["wait"] = "unknown"
+        ap["wait_basis"] = "unknown"
         guide.setdefault("uncertainties", []).append(
             "The fetched documentation did not establish whether an approval or review is required; "
             "absence of a mention in limited documentation is not evidence that none is required.")
@@ -496,6 +507,15 @@ def _honesty_guard(guide: dict, fetched: dict) -> None:
         ap.setdefault("kind", "unknown")
         if ap.get("wait") in (None, "", "none"):
             ap["wait"] = "unknown"
+        if ap.get("requirement") == "not-required":
+            ap["requirement"] = "unknown"
+    # enforce the enums regardless of what the model emitted
+    if ap.get("requirement") not in ("required", "conditional", "optional", "not-required", "unknown"):
+        ap["requirement"] = "unknown" if not isinstance(ap.get("required"), bool) else (
+            "required" if ap["required"] else "not-required")
+    if ap.get("wait_basis") not in ("documented", "estimate", "unknown", "none"):
+        w = str(ap.get("wait") or "").lower()
+        ap["wait_basis"] = "none" if w == "none" else ("unknown" if w in ("", "unknown") else "estimate")
     guide["approval"] = ap
     if re.search(r"\d", str(guide.get("setup_time") or "")) and not re.search(
             r"\b\d+\s*(minute|hour|day|week)s?\b|business days", corpus):
@@ -566,7 +586,13 @@ def investigate(query: str) -> dict:
     dom = _registrable(urlparse(site).netloc) if site else ""
     def rank(u):
         h = urlparse(u).netloc
-        return 0 if dom and _registrable(h) == dom else 1
+        official = bool(dom) and _registrable(h) == dom
+        docish = bool(re.search(r"oauth|authori|authentic|/docs|/documentation|develop|/api|/reference", urlparse(u).path, re.I))
+        if official and docish:
+            return 0
+        if official:
+            return 1
+        return 2
     seen, ordered = set(), []
     for u in sorted(candidates, key=rank):
         if u in seen or any(b in urlparse(u).netloc for b in JUNK_HOSTS):
@@ -591,7 +617,9 @@ def investigate(query: str) -> dict:
     # OAuth-looking links from the fetched pages themselves (same domain only).
     def _oauth_mentions(t: str) -> int:
         return len(re.findall(r"oauth|authorization", t, re.I))
-    if sum(1 for t in fetched.values() if _oauth_mentions(t) >= 3) < 2 and site:
+    setup_ish = sum(1 for t in fetched.values()
+                    if len(re.findall(r"create|register|redirect|client secret|client id", t, re.I)) >= 5)
+    if (sum(1 for t in fetched.values() if _oauth_mentions(t) >= 3) < 2 or setup_ish < 2) and site:
         extra: list[str] = []
         for u in list(fetched):
             try:
@@ -606,12 +634,12 @@ def investigate(query: str) -> dict:
                 v = urljoin(u, href)
                 h = urlparse(v)
                 if (h.scheme in ("http", "https") and _registrable(h.netloc) == dom
-                        and re.search(r"oauth|authorization|authentication", v, re.I)
+                        and re.search(r"oauth|authorization|authentication|getting-started|quickstart|concepts|tutorial", v, re.I)
                         and v not in fetched and v not in extra):
                     extra.append(v)
             if len(extra) >= 6:
                 break
-        for v in extra[:3]:
+        for v in extra[:4]:
             try:
                 t = _fetch_text(v)
             except TransientFetchError:

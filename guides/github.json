@@ -6,33 +6,90 @@
   "difficulty": "easy",
   "difficulty_reason": "Registration is a single form with no approval or review step; the app is usable immediately.",
   "setup_time": "~10 minutes",
-  "approval": {"required": false, "kind": "none", "wait": "none", "notes": "GitHub's OAuth app documentation contains no review or approval step anywhere in the registration flow; once you click Register application you immediately get a client ID and can generate a client secret."},
+  "approval": {
+    "required": false,
+    "kind": "none",
+    "wait": "none",
+    "notes": "GitHub's OAuth app documentation contains no review or approval step anywhere in the registration flow; once you click Register application you immediately get a client ID and can generate a client secret.",
+    "requirement": "not-required",
+    "wait_basis": "none"
+  },
   "summary": "One of the fastest OAuth setups that exists: a single registration form under Settings > Developer settings > OAuth apps, no approval, no verification, no wait. The main judgment call is whether you should build a GitHub App instead - GitHub itself recommends it for most new integrations.",
   "steps": [
-    {"title": "Open Developer settings", "detail": "Click your profile picture on any GitHub page, then Settings, then Developer settings in the left sidebar."},
-    {"title": "Create the OAuth app", "detail": "Under OAuth apps, click New OAuth App (or Register a new application on first use)."},
-    {"title": "Fill the registration form", "detail": "Application name, Homepage URL, optional description, and Authorization callback URL. Only include information you consider public - GitHub warns against sensitive data such as internal URLs."},
-    {"title": "Decide on device flow and token expiry", "detail": "Enable Device Flow only if your app will use it. Expire user access tokens is enabled by default; leave it on unless your code cannot yet handle short-lived tokens."},
-    {"title": "Register and copy credentials", "detail": "Click Register application. You get a client ID immediately and can generate a client secret. Store the secret outside your repo."}
+    {
+      "title": "Open Developer settings",
+      "detail": "Click your profile picture on any GitHub page, then Settings, then Developer settings in the left sidebar."
+    },
+    {
+      "title": "Create the OAuth app",
+      "detail": "Under OAuth apps, click New OAuth App (or Register a new application on first use)."
+    },
+    {
+      "title": "Fill the registration form",
+      "detail": "Application name, Homepage URL, optional description, and Authorization callback URL. Only include information you consider public - GitHub warns against sensitive data such as internal URLs."
+    },
+    {
+      "title": "Decide on device flow and token expiry",
+      "detail": "Enable Device Flow only if your app will use it. Expire user access tokens is enabled by default; leave it on unless your code cannot yet handle short-lived tokens."
+    },
+    {
+      "title": "Register and copy credentials",
+      "detail": "Click Register application. You get a client ID immediately and can generate a client secret. Store the secret outside your repo."
+    }
   ],
-  "requirements": ["A GitHub account (personal or an organization you administer)", "A public homepage URL for your app", "At least one authorization callback URL"],
+  "requirements": [
+    "A GitHub account (personal or an organization you administer)",
+    "A public homepage URL for your app",
+    "At least one authorization callback URL"
+  ],
   "nuances": [
     "GitHub's own docs recommend building a GitHub App instead of an OAuth app for most cases: GitHub Apps get fine-grained permissions, per-repository access, and short-lived tokens.",
     "A user or organization can own at most 100 OAuth apps.",
     "You can register up to 10 callback URLs on one OAuth app.",
     "OAuth apps can only act on behalf of a user; they cannot act independently."
   ],
-  "common_blockers": ["Choosing an OAuth app when the integration really needs GitHub App capabilities (fine-grained repo permissions, acting independently of a user)."],
-  "agent_can_do": ["Draft the registration values (name, homepage, callback URLs)", "Compare OAuth app vs GitHub App for your use case", "Prepare the authorization URL and token exchange code"],
-  "human_must_do": ["Click through Settings > Developer settings while logged in", "Generate and store the client secret"],
-  "evidence": [
-    {"claim": "Registration is a single form (name, homepage URL, optional description, callback URL) under Settings > Developer settings > OAuth apps, ending in Register application.", "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app", "status": "docs-supported"},
-    {"claim": "Up to 10 callback URLs are allowed per OAuth app; device flow is optional; expiring user tokens are on by default.", "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app", "status": "docs-supported"},
-    {"claim": "A user or organization can own up to 100 OAuth apps.", "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app", "status": "docs-supported"},
-    {"claim": "GitHub recommends considering a GitHub App instead: fine-grained permissions, per-repo access, short-lived tokens, ability to act independently of a user.", "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app", "status": "docs-supported"},
-    {"claim": "The registration page https://github.com/settings/applications/new redirects to login when unauthenticated (HTTP 302) - the console is login-gated, observed 2026-10-20.", "source": "https://github.com/settings/applications/new", "status": "tested"}
+  "common_blockers": [
+    "Choosing an OAuth app when the integration really needs GitHub App capabilities (fine-grained repo permissions, acting independently of a user)."
   ],
-  "uncertainties": ["GitHub publishes no explicit statement that OAuth apps need no approval; this conclusion comes from the complete absence of any review step in the official registration documentation."],
+  "agent_can_do": [
+    "Draft the registration values (name, homepage, callback URLs)",
+    "Compare OAuth app vs GitHub App for your use case",
+    "Prepare the authorization URL and token exchange code"
+  ],
+  "human_must_do": [
+    "Click through Settings > Developer settings while logged in",
+    "Generate and store the client secret"
+  ],
+  "evidence": [
+    {
+      "claim": "Registration is a single form (name, homepage URL, optional description, callback URL) under Settings > Developer settings > OAuth apps, ending in Register application.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Up to 10 callback URLs are allowed per OAuth app; device flow is optional; expiring user tokens are on by default.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "A user or organization can own up to 100 OAuth apps.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "GitHub recommends considering a GitHub App instead: fine-grained permissions, per-repo access, short-lived tokens, ability to act independently of a user.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The registration page https://github.com/settings/applications/new redirects to login when unauthenticated (HTTP 302) - the console is login-gated, observed 2026-10-20.",
+      "source": "https://github.com/settings/applications/new",
+      "status": "tested"
+    }
+  ],
+  "uncertainties": [
+    "GitHub publishes no explicit statement that OAuth apps need no approval; this conclusion comes from the complete absence of any review step in the official registration documentation."
+  ],
   "generated": false,
   "last_validated": "2026-10-20"
 }
