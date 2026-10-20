@@ -72,7 +72,7 @@
         </label>
         <details class="cdetail" {% if loop.first %}open{% endif %}>
           <summary>details</summary>
-          <p class="sd">{{ s.detail }}</p>
+          <p class="sd">{{ s.detail }}{% if s.source %} <a href="{{ s.source }}">source</a>{% endif %}</p>
         </details>
       </li>
       {% endfor %}
@@ -83,7 +83,7 @@
   {% if g.common_blockers %}
   <section class="gsec" id="blockers">
     <h2>Common blockers &amp; solutions</h2>
-    <ul class="blockers">{% for x in g.common_blockers %}<li>{{ x }}</li>{% endfor %}</ul>
+    <ul class="blockers">{% for x in g.common_blockers %}<li>{% if x is mapping %}<span class="prob">{{ x.problem }}</span>{% if x.solution %}<br><span class="sol">Fix: {{ x.solution }}</span>{% endif %}{% else %}{{ x }}{% endif %}</li>{% endfor %}</ul>
   </section>
   {% endif %}
 
@@ -128,7 +128,7 @@
       <a class="btn secondary" href="/guides/{{ g.slug }}/export" download>Download Markdown</a>
     </div>
     <p class="meta-line" id="copy-feedback">
-      {% if g.generated %}This link is served from the demo instance's saved copy; it survives restarts but may be lost when the demo is redeployed. The Markdown export is the permanent, self-contained snapshot.{% else %}Library guide link - stable. The Markdown export is a self-contained copy.{% endif %}
+      {% if g.generated %}This link is served from the demo instance's saved copy; it works while that instance's disk persists - a restart or redeploy of the demo may wipe it. The Markdown export is the permanent, self-contained snapshot.{% else %}Library guide link - stable. The Markdown export is a self-contained copy.{% endif %}
     </p>
   </section>
 </article>

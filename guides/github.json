@@ -4,7 +4,7 @@
   "website": "https://github.com",
   "developer_console": "https://github.com/settings/developers",
   "difficulty": "easy",
-  "difficulty_reason": "Registration is a single form with no approval or review step; the app is usable immediately.",
+  "difficulty_reason": "Technically trivial: one short registration form (name, homepage, callback URL) and the client ID/secret are issued immediately.",
   "setup_time": "~10 minutes",
   "approval": {
     "required": false,
@@ -12,7 +12,8 @@
     "wait": "none",
     "notes": "GitHub's OAuth app documentation contains no review or approval step anywhere in the registration flow; once you click Register application you immediately get a client ID and can generate a client secret.",
     "requirement": "not-required",
-    "wait_basis": "none"
+    "wait_basis": "none",
+    "wait_short": "none"
   },
   "summary": "One of the fastest OAuth setups that exists: a single registration form under Settings > Developer settings > OAuth apps, no approval, no verification, no wait. The main judgment call is whether you should build a GitHub App instead - GitHub itself recommends it for most new integrations.",
   "steps": [
@@ -49,7 +50,10 @@
     "OAuth apps can only act on behalf of a user; they cannot act independently."
   ],
   "common_blockers": [
-    "Choosing an OAuth app when the integration really needs GitHub App capabilities (fine-grained repo permissions, acting independently of a user)."
+    {
+      "problem": "Choosing an OAuth app when the integration really needs GitHub App capabilities (fine-grained repo permissions, acting independently of a user).",
+      "solution": "Check GitHub's own OAuth Apps vs GitHub Apps comparison before registering - GitHub recommends GitHub Apps for most new integrations, and switching later means re-registering and re-authorizing users."
+    }
   ],
   "agent_can_do": [
     "Draft the registration values (name, homepage, callback URLs)",

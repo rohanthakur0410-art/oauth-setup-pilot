@@ -3,16 +3,17 @@
   "app_name": "Slack",
   "website": "https://slack.com",
   "developer_console": "https://api.slack.com/apps",
-  "difficulty": "hard",
-  "difficulty_reason": "Creating the app is easy, but commercial distribution requires a Marketplace review with up to 10 business days of preliminary feedback and up to 10 weeks of functional review - plus a hard prerequisite of 10+ active workspaces.",
-  "setup_time": "~30 minutes to create and configure; weeks to months to get listed",
+  "difficulty": "medium",
+  "difficulty_reason": "App creation is a short form or manifest plus scopes, redirect URLs and event subscriptions - technically moderate. The demanding part is Marketplace review, rated separately.",
+  "setup_time": "~30 minutes",
   "approval": {
     "required": true,
     "kind": "Slack Marketplace review (required for commercial distribution)",
     "wait": "up to 10 business days (preliminary) + up to 10 weeks (functional, new submissions)",
     "notes": "Review is only triggered when you submit to the Marketplace. Slack states: in order to commercially distribute your app, you must submit it to the Marketplace. Building and installing on your own workspaces needs no review.",
     "requirement": "conditional",
-    "wait_basis": "documented"
+    "wait_basis": "documented",
+    "wait_short": "up to 10 business days + up to 10 weeks if listed"
   },
   "summary": "The OAuth app itself is quick to create at api.slack.com/apps. The real cost is distribution: Slack requires Marketplace submission for commercial distribution, gates submission on 10+ active workspaces, demands test credentials and ideally a demo video, and the functional review alone can take up to 10 weeks for a new app.",
   "steps": [
@@ -56,10 +57,22 @@
     "Slack cannot access your test Slack workspaces - give them a way to install the app themselves."
   ],
   "common_blockers": [
-    "Fewer than 10 active workspaces - submission is hard-blocked",
-    "App still in beta or buggy - returned without full review",
-    "Missing test credentials for a paid service",
-    "Requesting scopes for features that are not built yet"
+    {
+      "problem": "Fewer than 10 active workspaces - submission is hard-blocked",
+      "solution": "Grow real usage first: Marketplace submission requires at least 10 active workspaces, so plan the listing after adoption, not before."
+    },
+    {
+      "problem": "App still in beta or buggy - returned without full review",
+      "solution": "Stabilize before submitting; submissions with obvious defects are returned without full review and cost a review cycle."
+    },
+    {
+      "problem": "Missing test credentials for a paid service",
+      "solution": "Include test-account credentials in the submission so reviewers can exercise the integration end to end."
+    },
+    {
+      "problem": "Requesting scopes for features that are not built yet",
+      "solution": "Request only the scopes the submitted app actually uses; reviewers check scope usage against the built functionality."
+    }
   ],
   "agent_can_do": [
     "Map your feature list to the minimum Slack scopes",

@@ -4,15 +4,16 @@
   "website": "https://www.notion.com",
   "developer_console": "https://www.notion.so/developers/connections",
   "difficulty": "easy",
-  "difficulty_reason": "A public connection's OAuth flow works without any review; the optional Marketplace listing is a separate step with a 5-10 business day review.",
-  "setup_time": "~15 minutes for the connection; listing adds 5-10 business days of review",
+  "difficulty_reason": "One form creates the public connection and OAuth works immediately; the optional Marketplace listing is a separate, later process.",
+  "setup_time": "~15 minutes",
   "approval": {
     "required": false,
     "kind": "none for OAuth use; optional Marketplace listing review",
     "wait": "none for OAuth; 5-10 business days if you list",
     "notes": "Notion states public connections work independently of Marketplace listings and can be used via their OAuth flow without being listed. Listing is purely for discovery.",
     "requirement": "optional",
-    "wait_basis": "documented"
+    "wait_basis": "documented",
+    "wait_short": "none for OAuth; 5-10 business days if listed"
   },
   "summary": "Refreshingly decoupled: you create a public connection and its OAuth flow works immediately - no approval to use it in production. Submitting to the Notion Marketplace for discovery is optional, reviewed by the Notion team in 5-10 business days. The one irreversible decision is installation scope: only connections set to Any workspace at creation can ever be listed.",
   "steps": [
@@ -48,7 +49,10 @@
     "A rejected listing comes with emailed feedback; you can fix and resubmit."
   ],
   "common_blockers": [
-    "Creating the connection with the wrong installation scope and discovering it cannot be listed later - you would need a new connection."
+    {
+      "problem": "Creating the connection with the wrong installation scope and discovering it cannot be listed later - you would need a new connection.",
+      "solution": "Decide the installation scope up front; if you may list later, create the connection with the listable scope from the start."
+    }
   ],
   "agent_can_do": [
     "Draft the listing name, description, category and tags",

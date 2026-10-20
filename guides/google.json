@@ -3,16 +3,17 @@
   "app_name": "Google APIs",
   "website": "https://developers.google.com",
   "developer_console": "https://console.cloud.google.com/apis/credentials",
-  "difficulty": "hard",
-  "difficulty_reason": "Non-sensitive scopes are quick, but sensitive scopes trigger a verification that typically takes 3-5 business days with a mandatory demo video, and restricted scopes add a third-party security assessment that can take several weeks and repeats annually.",
-  "setup_time": "~30-60 minutes for the client; days to weeks for verification depending on scopes",
+  "difficulty": "medium",
+  "difficulty_reason": "Several form-driven configuration surfaces (consent screen branding, scope declaration, test users, client IDs, Search Console domain verification) but no individually hard step; the long pole is external verification, rated separately.",
+  "setup_time": "~30-60 minutes",
   "approval": {
     "required": true,
     "kind": "brand verification + sensitive/restricted scope verification + possible security assessment",
     "wait": "minutes (brand, automated) / typically 3-5 business days (sensitive scopes) / potentially several weeks (restricted scopes + security assessment)",
     "notes": "Whether you need verification depends on the scopes you request. Apps left in Testing publishing status (only listed test users) skip verification entirely - that is the right mode while building.",
     "requirement": "conditional",
-    "wait_basis": "documented"
+    "wait_basis": "documented",
+    "wait_short": "minutes to several weeks, scope-dependent"
   },
   "summary": "Creating an OAuth client in Google Cloud Console is fast; the cost is entirely in scope verification. Publishing to production with only non-sensitive scopes still requires brand verification (Google's automated branding evaluation, usually minutes), unless an exception applies - personal use or staying in Testing publishing status. Sensitive scopes need a verification submission with per-scope justifications and an unlisted YouTube demo video, typically 3-5 business days. Restricted scopes additionally require a permitted application type and an annual third-party security assessment (CASA), which can push the process to several weeks.",
   "steps": [
@@ -56,10 +57,22 @@
     "Restricted-scope verification requires brand verification first (typically 2-3 business days when branding changed) and can take several weeks overall."
   ],
   "common_blockers": [
-    "Privacy policy missing, off-domain, or silent about Google user data",
-    "Demo video that does not show each requested scope in use, or is not in English",
-    "Requesting broad scopes where a narrow one exists",
-    "Restricted scopes without a permitted application type"
+    {
+      "problem": "Privacy policy missing, off-domain, or silent about Google user data",
+      "solution": "Host a privacy policy on the verified domain that discloses how Google user data is accessed, used, stored, or shared - app-store or social links are not accepted."
+    },
+    {
+      "problem": "Demo video that does not show each requested scope in use, or is not in English",
+      "solution": "Record an unlisted YouTube video in English that walks through sign-in and shows every requested scope in actual use."
+    },
+    {
+      "problem": "Requesting broad scopes where a narrow one exists",
+      "solution": "Map each feature to the narrowest available scope; every sensitive or restricted scope needs its own written justification, so over-requesting multiplies review work."
+    },
+    {
+      "problem": "Restricted scopes without a permitted application type",
+      "solution": "Check the permitted application-type list for the restricted scope before building; unlisted types cannot pass the security assessment gate."
+    }
   ],
   "agent_can_do": [
     "Classify your planned API calls into non-sensitive/sensitive/restricted scopes and find narrower alternatives",

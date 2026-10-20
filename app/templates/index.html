@@ -30,7 +30,7 @@
       <td data-label="difficulty"><span class="ratewrap"><span class="dot {{ g.difficulty }}"></span><span class="rate">{{ g.difficulty }}</span></span></td>
       <td class="meta setup" data-label="setup">{{ g.setup_time }}</td>
       <td class="meta appr" data-label="approval"><span class="badge b-{{ (g.approval.requirement or 'unknown') | replace('-', '') }}">{{ g.approval.requirement or 'unknown' }}</span></td>
-      <td class="meta wait" data-label="wait">{{ g.approval.wait }}</td>
+      <td class="meta wait" data-label="wait">{{ g.approval.wait_short or g.approval.wait }}</td>
       <td class="action"><a class="btn small secondary" href="/guides/{{ g.slug }}">View guide</a></td>
     </tr>
     {% endfor %}

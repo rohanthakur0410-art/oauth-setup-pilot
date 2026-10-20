@@ -469,15 +469,15 @@ Produce a JSON object with EXACTLY these keys:
   "website": string (canonical marketing site),
   "developer_console": string (URL where the OAuth app is registered; from the docs if present),
   "difficulty": "easy" | "medium" | "hard" | "unknown",
-  "difficulty_reason": string (one sentence; easy=no approval wait, medium=optional/short review, hard=mandatory review or verification with real wait, unknown=the fetched docs do not establish the approval/review facts needed to rate it),
+  "difficulty_reason": string (one sentence on TECHNICAL COMPLEXITY ONLY: easy=one short form, medium=several configuration surfaces but no hard step, hard=technically demanding configuration; approval burden is rated separately in approval.requirement and must NOT drive difficulty),
   "setup_time": string (hands-on time to register the app, e.g. "~15 minutes"; use "unknown" if the fetched docs do not state it - never estimate),
   "approval": {{"required": true | false | null, "requirement": "required" | "conditional" | "optional" | "not-required" | "unknown", "kind": string (e.g. "none", "marketplace review", "scope verification + security assessment", "unknown"), "wait": string (e.g. "none", "3-5 business days", "up to 10 weeks", "unknown"), "wait_basis": "documented" | "estimate" | "unknown" | "none", "notes": string}},
   requirement meanings: "required" = a review/verification is mandatory before the OAuth app works for its intended use; "conditional" = it depends on requested scopes, app type, or distribution model (explain the dependency in notes); "optional" = a review exists but the OAuth app works without it; "not-required" = ONLY when the fetched docs explicitly show registration needs no review; "unknown" = the fetched docs do not establish it. wait_basis: "documented" if the wait is stated in the fetched docs, "estimate" if reasoned from partial info, "unknown" if not established, "none" when no wait applies. Never invent a waiting time and never label an app universally approval-free when that holds only for a particular scenario.
   "summary": string (2-3 sentences a developer can act on),
-  "steps": [{{"title": string, "detail": string}}],
+  "steps": [{{"title": string, "detail": string, "source": string (optional; MUST be one of the fetched URLs above - the page this step comes from; omit if not directly documented)}}],
   "requirements": [string],
   "nuances": [string] (things that bite people: scope tiers, redirect URL rules, review prerequisites, video requirements),
-  "common_blockers": [string],
+  "common_blockers": [{{"problem": string, "solution": string (the documented fix; use "not covered in the fetched docs" when the docs name the problem without a fix)}}],
   "agent_can_do": [string] (what an agent/assistant can do for the developer),
   "human_must_do": [string] (what only the developer can do: accounts, payments, legal, submitting),
   "evidence": [{{"claim": string, "source": string (MUST be one of the fetched URLs above), "status": "docs-supported"}}],
@@ -672,7 +672,21 @@ def investigate(query: str) -> dict:
     raw = _llm(PROMPT.format(query=query, site=site, docs=docs_block))
     guide = json.loads(raw.strip().removeprefix("```json").removesuffix("```").strip())
 
-    # Post-validation: evidence may only cite URLs we actually fetched.
+    # Post-validation: evidence and step sources may only cite URLs we actually fetched.
+    norm_steps = []
+    for s in guide.get("steps") or []:
+        if isinstance(s, dict):
+            if s.get("source") and s["source"] not in fetched:
+                s.pop("source", None)
+            norm_steps.append(s)
+    guide["steps"] = norm_steps
+    norm_blockers = []
+    for b in guide.get("common_blockers") or []:
+        if isinstance(b, str):
+            norm_blockers.append({"problem": b, "solution": ""})
+        elif isinstance(b, dict) and b.get("problem"):
+            norm_blockers.append(b)
+    guide["common_blockers"] = norm_blockers
     valid_evidence, dropped = [], 0
     for ev in guide.get("evidence", []):
         if ev.get("source") in fetched:

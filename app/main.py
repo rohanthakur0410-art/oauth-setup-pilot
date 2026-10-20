@@ -88,11 +88,17 @@ def guide_markdown(g: dict) -> str:
         L += ["## Prerequisites & required permissions", ""] + [f"- {x}" for x in g["requirements"]] + [""]
     L.append("## Setup checklist")
     for i, s in enumerate(g["steps"], 1):
-        L += [f"{i}. [ ] **{s['title']}** - {s['detail']}"]
-    for title, key in (("## Common blockers & solutions", "common_blockers"),
-                       ("## Provider-specific nuances", "nuances")):
-        if g.get(key):
-            L += ["", title] + [f"- {x}" for x in g[key]]
+        src = f" ({s['source']})" if isinstance(s, dict) and s.get("source") else ""
+        L += [f"{i}. [ ] **{s['title']}** - {s['detail']}{src}"]
+    if g.get("nuances"):
+        L += ["", "## Provider-specific nuances"] + [f"- {x}" for x in g["nuances"]]
+    if g.get("common_blockers"):
+        L += ["", "## Common blockers & solutions"]
+        for x in g["common_blockers"]:
+            if isinstance(x, dict):
+                L.append(f"- **{x['problem']}**" + (f" Fix: {x['solution']}" if x.get("solution") else ""))
+            else:
+                L.append(f"- {x}")
     L += ["", "## Evidence, sources & uncertainties", ""]
     for e in g["evidence"]:
         L.append(f"- [{e['status']}] {e['claim']} ({e['source']})")
