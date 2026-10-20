@@ -134,8 +134,9 @@ def _sanitize_site(url: str) -> str:
         raise ValueError("URLs containing credentials are not accepted")
     if p.scheme not in ("http", "https") or not p.netloc:
         raise ValueError("unsupported URL")
-    path = p.path if p.path not in ("", "/") else ""
-    return f"{p.scheme}://{p.netloc}{path}"
+    # Origin only: the path is never needed (docs discovery works off the
+    # homepage) and can itself carry tokens, e.g. https://app.io/<token>.
+    return f"{p.scheme}://{p.netloc}"
 
 
 def _registrable(host: str) -> str:

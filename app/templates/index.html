@@ -5,12 +5,19 @@
   <p>Pick an app below for a ready guide, or submit any app and the agent will investigate its official documentation and generate a guide live, with sources and uncertainties shown.</p>
 </section>
 
+<section class="explain">
+  <h2>How to read these guides</h2>
+  <p><strong>Two different things are easy to confuse.</strong> When your AI agent needs users to connect an app (say Google Calendar), there are two steps: <strong>(1)</strong> you, the developer, register one <em>provider OAuth app</em> with the provider and, on many providers, get it <em>approved or verified</em>; <strong>(2)</strong> each of your end users then connects their own account through a normal OAuth consent screen. Step 2 is usually quick everywhere. All the real cost lives in step 1 - and it varies wildly: a 10-minute form at GitHub, a weeks-long verification at Google.</p>
+  <p>Each guide answers: <strong>difficulty</strong> (easy = no approval wait, medium = optional or short review, hard = mandatory review/verification with a real wait), <strong>hands-on setup time</strong> vs <strong>approval wait</strong>, the exact registration console, what can block you, what an agent can do for you, and where only you can act (accounts, payments, legal agreements, submitting). Every claim carries its source; anything we could not verify is listed under Uncertainties.</p>
+</section>
+
 <section class="genbox">
   <h2>Generate a guide for any app</h2>
   <div class="genrow">
     <input id="q" type="text" placeholder="App name or website, e.g. Figma or https://figma.com" autocomplete="off">
     <button id="go" onclick="generate()">Investigate</button>
   </div>
+  <p class="warn">Submit app names or public website URLs only. Never paste a URL or text containing keys, tokens, passwords, or personal data - inputs are sent to a third-party LLM API.</p>
   <div id="status" class="status"></div>
 </section>
 

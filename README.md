@@ -50,7 +50,8 @@ python3 scripts/check_sources.py   # liveness-checks every evidence URL in the l
 
 ## Security notes
 
-- All outbound fetching (search results, homepage links, model-suggested console URLs) passes an SSRF guard: http/https only, host must resolve to public IPs only (no private/loopback/link-local/reserved), redirects followed manually (max 3) with every hop re-checked, and downloads capped at 2 MB.
+- User-supplied URLs are reduced to their origin (scheme://host) before any use - query, fragment and path are dropped because any of them can carry secrets, and URLs with embedded credentials are rejected. The form also warns against pasting anything sensitive. This reduces but cannot eliminate the risk of a user typing a secret as free text; inputs are sent to the configured third-party LLM API (see its data-use terms).
+- All outbound fetching http/https only, host must resolve to public IPs only (no private/loopback/link-local/reserved), redirects followed manually (max 3) with every hop re-checked, and downloads capped at 2 MB.
 - Generation queries are restricted to a conservative character set and length.
 - No secrets in the repo; API keys come from environment variables only.
 

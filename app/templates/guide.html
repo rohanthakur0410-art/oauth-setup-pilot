@@ -18,6 +18,11 @@
     </div>
   </div>
 
+  {% if g.generated %}
+  <p class="notes"><strong>Sharing this guide:</strong> it is cached on the demo server and may not survive a restart. Use <a href="/guides/{{ g.slug }}/export">Download as Markdown</a> for a permanent, shareable copy.</p>
+  {% else %}
+  <p class="meta"><a href="/guides/{{ g.slug }}/export">Download as Markdown</a></p>
+  {% endif %}
   <p class="summary">{{ g.summary }}</p>
   {% if g.approval.notes %}<p class="notes"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
 

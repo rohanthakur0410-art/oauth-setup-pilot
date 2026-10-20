@@ -45,6 +45,9 @@ def test_routes():
     assert r.status_code == 200 and r.json()["ok"]
     r = c.post("/api/generate", json={"query": ""})
     assert r.status_code == 400
+    r = c.get("/guides/github/export")
+    assert r.status_code == 200 and "# GitHub" in r.text and "## Evidence" in r.text
+    assert "attachment" in r.headers.get("content-disposition", "")
     print("routes OK")
 
 def test_ssrf_guard():
@@ -59,7 +62,8 @@ def test_ssrf_guard():
     print("ssrf guard OK")
 
 def test_url_sanitizer():
-    assert _sanitize_site("https://figma.com/apps?token=secret123#frag") == "https://figma.com/apps"
+    assert _sanitize_site("https://figma.com/apps?token=secret123#frag") == "https://figma.com"
+    assert _sanitize_site("https://app.io/abc123token") == "https://app.io"  # path can carry secrets; dropped
     assert _sanitize_site("figma.com?api_key=xyz") == "https://figma.com"
     assert _sanitize_site("https://example.com") == "https://example.com"
     for bad in ("https://user:pass@example.com/", "ftp://example.com"):
