@@ -424,13 +424,16 @@ def _llm(prompt: str) -> str:
             except NETWORK_EXC as e:
                 log.warning("LLM network error (model=%s attempt %d): %r", model, attempt + 1, e)
             except httpx.HTTPStatusError as e:
-                if e.response.status_code < 500:
+                code = e.response.status_code
+                if 400 <= code < 500 and code != 429:
                     raise
-                log.warning("LLM server error %d (model=%s attempt %d)",
-                            e.response.status_code, model, attempt + 1)
+                # 429 (rate limit) and 5xx (demand spikes) are transient:
+                # back off, retry, then move to the next model in the chain.
+                log.warning("LLM transient error %d (model=%s attempt %d)",
+                            code, model, attempt + 1)
             except (KeyError, IndexError, ValueError) as e:
                 log.warning("LLM empty/unparseable response (model=%s attempt %d): %r", model, attempt + 1, e)
-            time.sleep(1.5 * (attempt + 1))
+            time.sleep(2.0 * (attempt + 1))
     raise RuntimeError("LLM_UNAVAILABLE")
 
 
