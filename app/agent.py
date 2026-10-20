@@ -459,7 +459,7 @@ def _llm_once(prompt: str, provider: str, model: str | None = None) -> str:
             raise RuntimeError("OPENAI_API_KEY is not configured; live guide generation is unavailable.")
         base = os.environ.get("OPENAI_BASE_URL",
                               "https://api.groq.com/openai" if provider == "groq" else "https://api.openai.com")
-        model = os.environ.get("OPENAI_MODEL", "llama-3.3-70b-versatile" if provider == "groq" else "gpt-4o-mini")
+        model = os.environ.get("OPENAI_MODEL", "openai/gpt-oss-120b" if provider == "groq" else "gpt-4o-mini")
         r = httpx.post(
             f"{base}/v1/chat/completions",
             headers={"Authorization": f"Bearer {key}"},
