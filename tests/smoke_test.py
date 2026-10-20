@@ -21,7 +21,7 @@ def test_guides_schema():
         assert g["evidence"], f"{g['slug']}: no evidence"
         for ev in g["evidence"]:
             assert ev["source"].startswith("http"), ev
-            assert ev["status"] in ("docs-supported", "tested", "inferred")
+            assert ev["status"] in ("docs-supported", "tested", "reachability")
     print("guides schema OK")
 
 def test_parsers():
