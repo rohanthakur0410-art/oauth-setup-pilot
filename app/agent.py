@@ -151,7 +151,7 @@ def _discover_docs(site: str) -> list[str]:
     try:
         r = _safe_get(site if site.startswith("http") else f"https://{site}", timeout=20)
         if r is None:
-            return found
+            raise OSError("homepage unreachable")
         p = _TextExtractor()
         p.feed(r.text[:400_000])
         base = f"{urlparse(site if site.startswith('http') else 'https://' + site).scheme}://{urlparse(site if site.startswith('http') else 'https://' + site).netloc}"
