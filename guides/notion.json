@@ -1,0 +1,36 @@
+{
+  "slug": "notion",
+  "app_name": "Notion",
+  "website": "https://www.notion.com",
+  "developer_console": "https://www.notion.so/developers/connections",
+  "difficulty": "easy",
+  "difficulty_reason": "A public connection's OAuth flow works without any review; the optional Marketplace listing is a separate step with a 5-10 business day review.",
+  "setup_time": "~15 minutes for the connection; listing adds 5-10 business days of review",
+  "approval": {"required": false, "kind": "none for OAuth use; optional Marketplace listing review", "wait": "none for OAuth; 5-10 business days if you list", "notes": "Notion states public connections work independently of Marketplace listings and can be used via their OAuth flow without being listed. Listing is purely for discovery."},
+  "summary": "Refreshingly decoupled: you create a public connection and its OAuth flow works immediately - no approval to use it in production. Submitting to the Notion Marketplace for discovery is optional, reviewed by the Notion team in 5-10 business days. The one irreversible decision is installation scope: only connections set to Any workspace at creation can ever be listed.",
+  "steps": [
+    {"title": "Create a connection", "detail": "Go to the connections dashboard (notion.so/developers/connections - the old /my-integrations URL now redirects here) and create a public connection."},
+    {"title": "Choose installation scope carefully", "detail": "Set installation scope to Any workspace if you might ever want a Marketplace listing. The scope is fixed at creation and cannot be changed afterward."},
+    {"title": "Configure OAuth", "detail": "Set the redirect URI(s), copy the client ID and secret, and your OAuth flow is ready to use - no approval gate."},
+    {"title": "(Optional) Build the Marketplace listing", "detail": "Under Listings > Connections, start a new listing with name, description, category, tags, images, logo, and the associated public connection. Save as draft and edit freely before submitting."},
+    {"title": "(Optional) Submit for review", "detail": "Submit from the listing page; the Notion team reviews and responds by email within 5-10 business days. Track status under Listings > Connections; if changes are required, update and resubmit."}
+  ],
+  "requirements": ["A Notion account and workspace", "Redirect URI(s) for your app", "For listing: installation scope of Any workspace, listing images and copy"],
+  "nuances": [
+    "Installation scope is set at creation and cannot be changed - internal or Selected workspaces only connections can never be listed.",
+    "The long-standing console URL notion.so/my-integrations now redirects (301) to notion.so/developers/connections.",
+    "A rejected listing comes with emailed feedback; you can fix and resubmit."
+  ],
+  "common_blockers": ["Creating the connection with the wrong installation scope and discovering it cannot be listed later - you would need a new connection."],
+  "agent_can_do": ["Draft the listing name, description, category and tags", "Check your listing copy against Notion's Connection Gallery best practices", "Prepare the OAuth redirect configuration"],
+  "human_must_do": ["Create the connection while logged in", "Decide the installation scope", "Submit the listing and respond to Notion's feedback"],
+  "evidence": [
+    {"claim": "Public connections work independently of Marketplace listings and can be used via their OAuth flow without being listed; listing is optional.", "source": "https://developers.notion.com/guides/get-started/marketplace-listing", "status": "docs-supported"},
+    {"claim": "Only public connections with installation scope Any workspace are eligible for the Marketplace, and installation scope is set at creation and cannot be changed afterward.", "source": "https://developers.notion.com/guides/get-started/marketplace-listing", "status": "docs-supported"},
+    {"claim": "After submitting a listing, expect to hear back from the Notion team within 5-10 business days via email; status is tracked on the Listings > Connections page.", "source": "https://developers.notion.com/guides/get-started/marketplace-listing", "status": "docs-supported"},
+    {"claim": "https://www.notion.so/my-integrations redirects (HTTP 301) to https://www.notion.so/developers/connections, observed 2026-10-20 - older tutorials citing the former are outdated.", "source": "https://www.notion.so/my-integrations", "status": "tested"}
+  ],
+  "uncertainties": ["Notion does not publish what percentage of listings are approved or common rejection reasons beyond the general categories (brand/trademark, quality, baseline criteria)."],
+  "generated": false,
+  "last_validated": "2026-10-20"
+}

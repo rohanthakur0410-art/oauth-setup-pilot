@@ -1,0 +1,41 @@
+{
+  "slug": "google",
+  "app_name": "Google APIs",
+  "website": "https://developers.google.com",
+  "developer_console": "https://console.cloud.google.com/apis/credentials",
+  "difficulty": "hard",
+  "difficulty_reason": "Non-sensitive scopes are quick, but sensitive scopes trigger a verification that typically takes 3-5 business days with a mandatory demo video, and restricted scopes add a third-party security assessment that can take several weeks and repeats annually.",
+  "setup_time": "~30-60 minutes for the client; days to weeks for verification depending on scopes",
+  "approval": {"required": true, "kind": "brand verification + sensitive/restricted scope verification + possible security assessment", "wait": "minutes (brand, automated) / typically 3-5 business days (sensitive scopes) / potentially several weeks (restricted scopes + security assessment)", "notes": "Whether you need verification depends on the scopes you request. Apps left in Testing publishing status (only listed test users) skip verification entirely - that is the right mode while building."},
+  "summary": "Creating an OAuth client in Google Cloud Console is fast; the cost is entirely in scope verification. Non-sensitive scopes need only brand verification (usually minutes, automated). Sensitive scopes need a verification submission with per-scope justifications and an unlisted YouTube demo video, typically 3-5 business days. Restricted scopes additionally require a permitted application type and an annual third-party security assessment (CASA), which can push the process to several weeks.",
+  "steps": [
+    {"title": "Create a Cloud project and OAuth client", "detail": "In Google Cloud Console, create a project, configure the OAuth consent screen (branding: app name, support email, home page, privacy policy link), and create OAuth client IDs on the Clients page."},
+    {"title": "Stay in Testing while building", "detail": "Leave Publishing status at Testing so only listed test users can authorize. Verification is not required in this mode; note the unverified-app user cap."},
+    {"title": "Verify your domain and branding", "detail": "Verify ownership of authorized domains in Google Search Console with an Owner/Editor account, and make sure the consent screen branding accurately represents the app. Brand verification's automated review usually completes in minutes; compliant results are valid for 7 days, so publish within that window."},
+    {"title": "Declare all scopes", "detail": "On the Data Access page, declare every scope your app requests. They are classified non-sensitive, sensitive, or restricted, which determines the verification burden. Request the narrowest scope that works."},
+    {"title": "Prepare verification evidence for sensitive scopes", "detail": "For each sensitive scope: a detailed justification of why it is needed and why a narrower scope is insufficient, plus an unlisted YouTube video showing the consent flow and the actual use of each granted scope (in English, app name and client ID visible)."},
+    {"title": "For restricted scopes, plan the security assessment", "detail": "If your app accesses restricted-scope data from or through a server, it must pass an annual security assessment by a Google-approved third party under the App Defense Alliance / CASA framework, be reverified at least every 12 months, and match a permitted application type."}
+  ],
+  "requirements": ["A Google Cloud project", "A publicly accessible home page that clearly relates to the app (app-store or social links are not accepted)", "A privacy policy hosted on the same domain, disclosing how Google user data is accessed, used, stored, or shared", "Domain ownership verified in Search Console", "An unlisted YouTube demo video for sensitive/restricted scopes"],
+  "nuances": [
+    "The consent-screen home page must be publicly accessible, not behind a login.",
+    "Compliant brand verification results expire after 7 days if you do not publish.",
+    "Sensitive scopes can be blocked for Google Workspace users unless an org admin marks your client ID as trusted.",
+    "Delete OAuth clients that are not production-ready from the project before requesting verification.",
+    "Restricted-scope verification requires brand verification first (typically 2-3 business days when branding changed) and can take several weeks overall."
+  ],
+  "common_blockers": ["Privacy policy missing, off-domain, or silent about Google user data", "Demo video that does not show each requested scope in use, or is not in English", "Requesting broad scopes where a narrow one exists", "Restricted scopes without a permitted application type"],
+  "agent_can_do": ["Classify your planned API calls into non-sensitive/sensitive/restricted scopes and find narrower alternatives", "Draft per-scope justifications", "Script the demo video so it shows consent, app name, client ID and scope usage", "Pre-check your home page and privacy policy against Google's stated requirements"],
+  "human_must_do": ["Own the Google Cloud project and Search Console verification", "Record and upload the demo video", "Submit verification and answer Trust & Safety emails", "Arrange the third-party security assessment for restricted scopes"],
+  "evidence": [
+    {"claim": "Sensitive scope verification typically takes 3-5 business days; apps must request the narrowest scope necessary.", "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "status": "docs-supported"},
+    {"claim": "Verification for sensitive scopes requires a detailed per-scope justification and an unlisted YouTube video showing the consent flow and each scope's use.", "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "status": "docs-supported"},
+    {"claim": "The app home page must be publicly accessible and the privacy policy must be hosted on the same domain and disclose how Google user data is used.", "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "status": "docs-supported"},
+    {"claim": "Apps in Testing publishing status are limited to listed test users and do not require verification; personal-use apps can skip verification subject to a user cap.", "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "status": "docs-supported"},
+    {"claim": "Restricted scopes require a permitted application type, additional reviews, and - when data is accessed from or through a server - an annual security assessment by a Google-approved third party (App Defense Alliance / CASA); the process can take several weeks, with brand verification (typically 2-3 business days) first.", "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification", "status": "docs-supported"},
+    {"claim": "https://console.cloud.google.com/apis/credentials redirects to Google sign-in (HTTP 302) when unauthenticated, observed 2026-10-20.", "source": "https://console.cloud.google.com/apis/credentials", "status": "tested"}
+  ],
+  "uncertainties": ["Exact verification turnaround beyond the published 3-5 business day figure varies; Google's Trust & Safety team may request more information by email.", "The cost of the third-party CASA security assessment is not stated on the verification pages."],
+  "generated": false,
+  "last_validated": "2026-10-20"
+}

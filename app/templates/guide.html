@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ g.app_name }} - OAuth Setup Pilot{% endblock %}
+{% block content %}
+<article class="guide">
+  <div class="guide-head">
+    <h1>{{ g.app_name }}</h1>
+    <span class="badge big {{ g.difficulty }}">{{ g.difficulty }}</span>
+    {% if g.generated %}<span class="badge generated">agent-generated</span>{% endif %}
+  </div>
+  <p class="reason">{{ g.difficulty_reason }}</p>
+
+  <div class="verdicts">
+    <div class="verdict"><label>Hands-on setup</label><strong>{{ g.setup_time }}</strong></div>
+    <div class="verdict"><label>Approval needed</label><strong>{{ 'Yes - ' + g.approval.kind if g.approval.required else 'No' }}</strong></div>
+    <div class="verdict"><label>Expected wait</label><strong>{{ g.approval.wait }}</strong></div>
+    <div class="verdict"><label>Register at</label><strong><a href="{{ g.developer_console }}">{{ g.developer_console }}</a></strong>
+      {% if g.console_check %}<span class="check">(unauthenticated check: HTTP {{ g.console_check.status or 'failed' }}{% if g.console_check.redirect %} &rarr; login/redirect{% endif %})</span>{% endif %}
+    </div>
+  </div>
+
+  <p class="summary">{{ g.summary }}</p>
+  {% if g.approval.notes %}<p class="notes"><strong>Approval notes:</strong> {{ g.approval.notes }}</p>{% endif %}
+
+  <h2>Steps</h2>
+  <ol class="steps">
+    {% for s in g.steps %}<li><strong>{{ s.title }}</strong><br>{{ s.detail }}</li>{% endfor %}
+  </ol>
+
+  <div class="cols">
+    <div><h2>Requirements</h2><ul>{% for x in g.requirements %}<li>{{ x }}</li>{% endfor %}</ul></div>
+    <div><h2>Nuances that bite</h2><ul>{% for x in g.nuances %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  </div>
+
+  {% if g.common_blockers %}<h2>Common blockers</h2><ul>{% for x in g.common_blockers %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+
+  <div class="cols">
+    <div><h2>What an agent can do for you</h2><ul>{% for x in g.agent_can_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
+    <div><h2>Where you take over</h2><ul>{% for x in g.human_must_do %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  </div>
+
+  <h2>Evidence</h2>
+  <p class="legend">Every claim below names its source. <span class="ev docs-supported">docs-supported</span> = stated in the linked official page. <span class="ev tested">tested</span> = we attempted it. Anything we could not verify is under Uncertainties, not here.</p>
+  <ul class="evidence">
+    {% for e in g.evidence %}
+    <li><span class="ev {{ e.status }}">{{ e.status }}</span> {{ e.claim }} <a href="{{ e.source }}">source</a></li>
+    {% endfor %}
+  </ul>
+
+  {% if g.uncertainties %}
+  <h2>Uncertainties</h2>
+  <ul class="uncertain">{% for x in g.uncertainties %}<li>{{ x }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if g.sources_fetched %}
+  <h2>Pages the agent fetched</h2>
+  <ul class="fetched">{% for u in g.sources_fetched %}<li><a href="{{ u }}">{{ u }}</a></li>{% endfor %}</ul>
+  <p class="meta">Generated in {{ g.generation_seconds }}s via {{ g.llm_provider }}.</p>
+  {% endif %}
+  {% if g.last_validated %}<p class="meta">Guide last validated against sources: {{ g.last_validated }}</p>{% endif %}
+</article>
+{% endblock %}

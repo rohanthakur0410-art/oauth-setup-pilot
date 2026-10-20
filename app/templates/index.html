@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Setting up an OAuth app: know before you start</h1>
+  <p>Pick an app below for a ready guide, or submit any app and the agent will investigate its official documentation and generate a guide live, with sources and uncertainties shown.</p>
+</section>
+
+<section class="genbox">
+  <h2>Generate a guide for any app</h2>
+  <div class="genrow">
+    <input id="q" type="text" placeholder="App name or website, e.g. Figma or https://figma.com" autocomplete="off">
+    <button id="go" onclick="generate()">Investigate</button>
+  </div>
+  <div id="status" class="status"></div>
+</section>
+
+<section>
+  <h2>Guide library</h2>
+  <input id="filter" type="text" placeholder="Filter library..." onkeyup="filterGuides()" class="filter">
+  <div class="grid" id="grid">
+    {% for g in guides %}
+    <a class="card" href="/guides/{{ g.slug }}">
+      <div class="card-top">
+        <strong>{{ g.app_name }}</strong>
+        <span class="badge {{ g.difficulty }}">{{ g.difficulty }}</span>
+      </div>
+      <div class="card-meta">{{ g.setup_time }} setup &middot; approval: {{ g.approval.wait }}</div>
+      <div class="card-sum">{{ g.summary }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+async function generate() {
+  const q = document.getElementById('q').value.trim();
+  const st = document.getElementById('status');
+  const btn = document.getElementById('go');
+  if (!q) { st.textContent = 'Enter an app name or website.'; return; }
+  btn.disabled = true;
+  st.textContent = 'Agent is searching official documentation, fetching pages, and drafting a guide. This can take 30-90 seconds...';
+  try {
+    const r = await fetch('/api/generate', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({query: q})});
+    const data = await r.json();
+    if (data.url) { window.location = data.url; return; }
+    st.textContent = 'Could not generate: ' + (data.error || r.status);
+  } catch (e) {
+    st.textContent = 'Request failed: ' + e;
+  }
+  btn.disabled = false;
+}
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+function filterGuides() {
+  const v = document.getElementById('filter').value.toLowerCase();
+  document.querySelectorAll('#grid .card').forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(v) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

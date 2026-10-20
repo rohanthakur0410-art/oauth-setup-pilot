@@ -1,0 +1,41 @@
+{
+  "slug": "hubspot",
+  "app_name": "HubSpot",
+  "website": "https://www.hubspot.com",
+  "developer_console": "https://developers.hubspot.com/",
+  "difficulty": "hard",
+  "difficulty_reason": "Marketplace listing demands proof of traction (3 active unaffiliated installs) before you can even submit, then a manual review with an initial pass within 10 business days and a full feedback process that can run up to 60 days.",
+  "setup_time": "~30 minutes to create the app; listing requires real installs plus a review cycle",
+  "approval": {"required": true, "kind": "HubSpot Ecosystem Quality team manual review (for Marketplace listing)", "wait": "initial review within 10 business days; full review and feedback process up to 60 days", "notes": "Only one app may be in review at a time - additional submissions while one is being processed are automatically rejected."},
+  "summary": "Creating the OAuth app in a HubSpot developer account is straightforward, but public distribution through the HubSpot Marketplace is gated: you need at least three active, unique, unaffiliated installs, complete public setup documentation, live URLs throughout, and accurate pricing before submission. The Ecosystem Quality team manually reviews, responds within 10 business days initially, and the whole process can take up to 60 days.",
+  "steps": [
+    {"title": "Create a developer account and app", "detail": "Sign up for a HubSpot developer account, create a public app, and configure OAuth - public apps must use OAuth as their sole authorization method."},
+    {"title": "Get three real installs", "detail": "Your app needs at least three active, unique installs: unique production HubSpot accounts, unaffiliated with your organization, showing successful app activity (OAuth-authenticated API requests or signed webhook/extension requests) within the past 30 days."},
+    {"title": "Meet the minimum requirements", "detail": "One use case per app, a single HubSpot app ID tied to the listing, no redirects to other apps, no classic CRM cards (unsupported since June 16, 2025), agree to the Technology Partner Program Agreement, and stay clear of restricted industries."},
+    {"title": "Build the listing", "detail": "Write integration-specific listing content (not general product marketing), link public setup documentation specific to the integration, an install button URL, live support resources, Terms of Service and Privacy Policy URLs, accurate shared-data mapping, and pricing that matches your website."},
+    {"title": "Allow HubSpot's crawler", "detail": "All listing URLs must be live and publicly available - HubSpot verifies them with its crawler (user agent HubSpot Crawler). Allow-list it before submitting to avoid delays."},
+    {"title": "Submit and work the feedback loop", "detail": "The Ecosystem Quality team completes an initial review within 10 business days and contacts you about incorrect, misleading, or incomplete information. The entire review and feedback process should take no more than 60 days from when feedback is shared."}
+  ],
+  "requirements": ["A HubSpot developer account", "OAuth as the sole authorization method", "3 active, unique, unaffiliated installs", "Public integration-specific setup documentation", "Live ToS, privacy policy, support and install URLs", "At least one support contact method"],
+  "nuances": [
+    "The 3-install prerequisite means you must acquire real users before you can list - plan a private-beta distribution path.",
+    "Only one app per account can be in review at a time; extra submissions are automatically rejected.",
+    "HubSpot crawls every URL in your listing; broken or login-gated links delay review.",
+    "Pricing in the listing must match your website, and only plans that include the integration may be listed.",
+    "AI connector apps must require user-level permissions or be built with HubSpot's MCP Server."
+  ],
+  "common_blockers": ["Fewer than 3 active installs - you cannot submit", "Listing URLs that are broken, stale, or behind a login", "Generic product copy instead of integration-specific content", "Submitting a second app while the first is still in review"],
+  "agent_can_do": ["Audit your listing content and URLs against the requirements", "Draft the setup documentation using HubSpot's template", "Map your OAuth scopes to the shared-data table", "Check branding against HubSpot's guidelines (capital S in HubSpot, no Hub in your app name)"],
+  "human_must_do": ["Acquire the 3 real installs", "Own the developer account and agree to the partner terms", "Submit and respond to review feedback"],
+  "evidence": [
+    {"claim": "Listings are manually reviewed by the HubSpot Ecosystem Quality team; the initial review completes within 10 business days and the entire review and feedback process should take no more than 60 days from when feedback is shared.", "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements", "status": "docs-supported"},
+    {"claim": "Your app must have at least three active, unique installs - production accounts unaffiliated with your organization showing successful app activity within the past 30 days.", "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements", "status": "docs-supported"},
+    {"claim": "Public apps must use OAuth as their sole authorization method and a single HubSpot app ID tied to the listing.", "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements", "status": "docs-supported"},
+    {"claim": "All URLs in the listing must be live and publicly available and are verified with HubSpot's crawler (user agent HubSpot Crawler); allow-listing it before submitting is recommended.", "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements", "status": "docs-supported"},
+    {"claim": "Only one app can be submitted at a time; additional apps submitted while one is being processed are automatically rejected.", "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements", "status": "docs-supported"},
+    {"claim": "https://developers.hubspot.com/ returns HTTP 200 unauthenticated (observed 2026-10-20); creating an app itself requires a developer account login.", "source": "https://developers.hubspot.com/", "status": "tested"}
+  ],
+  "uncertainties": ["The listing requirements page does not state whether private (non-Marketplace) distribution of a public OAuth app needs any approval - teams distributing outside the Marketplace should confirm current terms."],
+  "generated": false,
+  "last_validated": "2026-10-20"
+}
