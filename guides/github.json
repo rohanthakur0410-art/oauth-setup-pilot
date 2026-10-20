@@ -19,15 +19,18 @@
   "steps": [
     {
       "title": "Open Developer settings",
-      "detail": "Click your profile picture on any GitHub page, then Settings, then Developer settings in the left sidebar."
+      "detail": "Click your profile picture on any GitHub page, then Settings, then Developer settings in the left sidebar.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
     {
       "title": "Create the OAuth app",
-      "detail": "Under OAuth apps, click New OAuth App (or Register a new application on first use)."
+      "detail": "Under OAuth apps, click New OAuth App (or Register a new application on first use).",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
     {
       "title": "Fill the registration form",
-      "detail": "Application name, Homepage URL, optional description, and Authorization callback URL. Only include information you consider public - GitHub warns against sensitive data such as internal URLs."
+      "detail": "Application name, Homepage URL, optional description, and Authorization callback URL. Only include information you consider public - GitHub warns against sensitive data such as internal URLs.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     },
     {
       "title": "Decide on device flow and token expiry",
@@ -35,7 +38,8 @@
     },
     {
       "title": "Register and copy credentials",
-      "detail": "Click Register application. You get a client ID immediately and can generate a client secret. Store the secret outside your repo."
+      "detail": "Click Register application. You get a client ID immediately and can generate a client secret. Store the secret outside your repo.",
+      "source": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
     }
   ],
   "requirements": [
@@ -88,7 +92,7 @@
     {
       "claim": "The registration page https://github.com/settings/applications/new redirects to login when unauthenticated (HTTP 302) - the console is login-gated, observed 2026-10-20.",
       "source": "https://github.com/settings/applications/new",
-      "status": "tested"
+      "status": "reachability"
     }
   ],
   "uncertainties": [

@@ -127,6 +127,7 @@ ul.blockers .sol { color: var(--ink-soft); font-size: 13.5px; }
 .ev { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin-right: 6px; }
 .ev.docs-supported { color: var(--easy); border-color: var(--easy); }
 .ev.tested { color: var(--accent); border-color: var(--accent); }
+.ev.reachability { color: #7c3aed; border-color: #7c3aed; }
 ul.evidence, ul.uncertain { list-style: none; padding-left: 0; }
 ul.evidence li, ul.uncertain li { padding-left: 14px; position: relative; }
 ul.uncertain li::before { content: "?"; position: absolute; left: 0; color: var(--medium); font-family: var(--mono); }

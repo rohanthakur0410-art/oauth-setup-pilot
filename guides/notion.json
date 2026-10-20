@@ -23,7 +23,8 @@
     },
     {
       "title": "Choose installation scope carefully",
-      "detail": "Set installation scope to Any workspace if you might ever want a Marketplace listing. The scope is fixed at creation and cannot be changed afterward."
+      "detail": "Set installation scope to Any workspace if you might ever want a Marketplace listing. The scope is fixed at creation and cannot be changed afterward.",
+      "source": "https://developers.notion.com/guides/get-started/marketplace-listing"
     },
     {
       "title": "Configure OAuth",
@@ -31,11 +32,13 @@
     },
     {
       "title": "(Optional) Build the Marketplace listing",
-      "detail": "Under Listings > Connections, start a new listing with name, description, category, tags, images, logo, and the associated public connection. Save as draft and edit freely before submitting."
+      "detail": "Under Listings > Connections, start a new listing with name, description, category, tags, images, logo, and the associated public connection. Save as draft and edit freely before submitting.",
+      "source": "https://developers.notion.com/guides/get-started/marketplace-listing"
     },
     {
       "title": "(Optional) Submit for review",
-      "detail": "Submit from the listing page; the Notion team reviews and responds by email within 5-10 business days. Track status under Listings > Connections; if changes are required, update and resubmit."
+      "detail": "Submit from the listing page; the Notion team reviews and responds by email within 5-10 business days. Track status under Listings > Connections; if changes are required, update and resubmit.",
+      "source": "https://developers.notion.com/guides/get-started/marketplace-listing"
     }
   ],
   "requirements": [
@@ -83,7 +86,7 @@
     {
       "claim": "https://www.notion.so/my-integrations redirects (HTTP 301) to https://www.notion.so/developers/connections, observed 2026-10-20 - older tutorials citing the former are outdated.",
       "source": "https://www.notion.so/my-integrations",
-      "status": "tested"
+      "status": "reachability"
     }
   ],
   "uncertainties": [

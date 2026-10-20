@@ -23,31 +23,36 @@
     },
     {
       "title": "Stay in Testing while building",
-      "detail": "Leave Publishing status at Testing so only listed test users can authorize. Verification is not required in this mode; note the unverified-app user cap."
+      "detail": "Leave Publishing status at Testing so only listed test users can authorize. Verification is not required in this mode; note the unverified-app user cap.",
+      "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification"
     },
     {
       "title": "Verify your domain and branding",
-      "detail": "Verify ownership of authorized domains in Google Search Console with an Owner/Editor account, and make sure the consent screen branding accurately represents the app. Brand verification's automated review usually completes in minutes; compliant results are valid for 7 days, so publish within that window."
+      "detail": "Verify ownership of authorized domains in Google Search Console with an Owner/Editor account, and make sure the consent screen branding accurately represents the app. Brand verification's automated review usually completes in minutes; compliant results are valid for 7 days, so publish within that window.",
+      "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification"
     },
     {
       "title": "Declare all scopes",
-      "detail": "On the Data Access page, declare every scope your app requests. They are classified non-sensitive, sensitive, or restricted, which determines the verification burden. Request the narrowest scope that works."
+      "detail": "On the Data Access page, declare every scope your app requests. They are classified non-sensitive, sensitive, or restricted, which determines the verification burden. Request the narrowest scope that works.",
+      "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification"
     },
     {
       "title": "Prepare verification evidence for sensitive scopes",
-      "detail": "For each sensitive scope: a detailed justification of why it is needed and why a narrower scope is insufficient, plus an unlisted YouTube video showing the consent flow and the actual use of each granted scope (in English, app name and client ID visible)."
+      "detail": "For each sensitive scope: a detailed justification of why it is needed and why a narrower scope is insufficient, plus an unlisted YouTube video showing the consent flow and the actual use of each granted scope (in English, app name and client ID visible).",
+      "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification"
     },
     {
       "title": "For restricted scopes, plan the security assessment",
-      "detail": "If your app accesses restricted-scope data from or through a server, it must pass an annual security assessment by a Google-approved third party under the App Defense Alliance / CASA framework, be reverified at least every 12 months, and match a permitted application type."
+      "detail": "If your app accesses restricted-scope data from or through a server, it must pass an annual security assessment by a Google-approved third party under the App Defense Alliance / CASA framework, be reverified at least every 12 months, and match a permitted application type.",
+      "source": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification"
     }
   ],
   "requirements": [
     "A Google Cloud project",
-    "A publicly accessible home page that clearly relates to the app (app-store or social links are not accepted)",
-    "A privacy policy hosted on the same domain, disclosing how Google user data is accessed, used, stored, or shared",
-    "Domain ownership verified in Search Console",
-    "An unlisted YouTube demo video for sensitive/restricted scopes"
+    "For verification: a publicly accessible home page that clearly relates to the app (app-store or social links are not accepted)",
+    "For verification: a privacy policy hosted on the same domain, disclosing how Google user data is accessed, used, stored, or shared",
+    "For verification: domain ownership verified in Search Console",
+    "For sensitive/restricted scopes: an unlisted YouTube demo video"
   ],
   "nuances": [
     "The consent-screen home page must be publicly accessible, not behind a login.",
@@ -115,7 +120,7 @@
     {
       "claim": "https://console.cloud.google.com/apis/credentials redirects to Google sign-in (HTTP 302) when unauthenticated, observed 2026-10-20.",
       "source": "https://console.cloud.google.com/apis/credentials",
-      "status": "tested"
+      "status": "reachability"
     }
   ],
   "uncertainties": [

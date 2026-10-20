@@ -96,7 +96,7 @@
   {# 8. Evidence, sources, uncertainties #}
   <section class="gsec" id="evidence">
     <h2>Evidence, sources &amp; uncertainties</h2>
-    <p class="legend"><span class="ev docs-supported">docs-supported</span> stated in the linked official page &middot; <span class="ev tested">tested</span> we attempted it &middot; anything unverifiable is listed under Uncertainties, not passed off as fact.</p>
+    <p class="legend"><span class="ev docs-supported">docs-supported</span> stated in the linked official page &middot; <span class="ev tested">tested</span> we performed the action &middot; <span class="ev reachability">reachability</span> URL responds unauthenticated only - no account created, no setup performed &middot; anything unverifiable is listed under Uncertainties, not passed off as fact.</p>
     <ul class="evidence">
       {% for e in g.evidence %}
       <li><span class="ev {{ e.status }}">{{ e.status }}</span> {{ e.claim }} <a href="{{ e.source }}">source</a></li>

@@ -23,32 +23,37 @@
     },
     {
       "title": "Get three real installs",
-      "detail": "Your app needs at least three active, unique installs: unique production HubSpot accounts, unaffiliated with your organization, showing successful app activity (OAuth-authenticated API requests or signed webhook/extension requests) within the past 30 days."
+      "detail": "Your app needs at least three active, unique installs: unique production HubSpot accounts, unaffiliated with your organization, showing successful app activity (OAuth-authenticated API requests or signed webhook/extension requests) within the past 30 days.",
+      "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements"
     },
     {
       "title": "Meet the minimum requirements",
-      "detail": "One use case per app, a single HubSpot app ID tied to the listing, no redirects to other apps, no classic CRM cards (unsupported since June 16, 2025), agree to the Technology Partner Program Agreement, and stay clear of restricted industries."
+      "detail": "One use case per app, a single HubSpot app ID tied to the listing, no redirects to other apps, no classic CRM cards (unsupported since June 16, 2025), agree to the Technology Partner Program Agreement, and stay clear of restricted industries.",
+      "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements"
     },
     {
       "title": "Build the listing",
-      "detail": "Write integration-specific listing content (not general product marketing), link public setup documentation specific to the integration, an install button URL, live support resources, Terms of Service and Privacy Policy URLs, accurate shared-data mapping, and pricing that matches your website."
+      "detail": "Write integration-specific listing content (not general product marketing), link public setup documentation specific to the integration, an install button URL, live support resources, Terms of Service and Privacy Policy URLs, accurate shared-data mapping, and pricing that matches your website.",
+      "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements"
     },
     {
       "title": "Allow HubSpot's crawler",
-      "detail": "All listing URLs must be live and publicly available - HubSpot verifies them with its crawler (user agent HubSpot Crawler). Allow-list it before submitting to avoid delays."
+      "detail": "All listing URLs must be live and publicly available - HubSpot verifies them with its crawler (user agent HubSpot Crawler). Allow-list it before submitting to avoid delays.",
+      "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements"
     },
     {
       "title": "Submit and work the feedback loop",
-      "detail": "The Ecosystem Quality team completes an initial review within 10 business days and contacts you about incorrect, misleading, or incomplete information. The entire review and feedback process should take no more than 60 days from when feedback is shared."
+      "detail": "The Ecosystem Quality team completes an initial review within 10 business days and contacts you about incorrect, misleading, or incomplete information. The entire review and feedback process should take no more than 60 days from when feedback is shared.",
+      "source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements"
     }
   ],
   "requirements": [
     "A HubSpot developer account",
-    "OAuth as the sole authorization method",
-    "3 active, unique, unaffiliated installs",
-    "Public integration-specific setup documentation",
-    "Live ToS, privacy policy, support and install URLs",
-    "At least one support contact method"
+    "For Marketplace listing: OAuth as the sole authorization method",
+    "For Marketplace listing: 3 active, unique, unaffiliated installs",
+    "For Marketplace listing: public integration-specific setup documentation",
+    "For Marketplace listing: live ToS, privacy policy, support and install URLs",
+    "For Marketplace listing: at least one support contact method"
   ],
   "nuances": [
     "The 3-install prerequisite means you must acquire real users before you can list - plan a private-beta distribution path.",
@@ -115,7 +120,7 @@
     {
       "claim": "https://developers.hubspot.com/ returns HTTP 200 unauthenticated (observed 2026-10-20); creating an app itself requires a developer account login.",
       "source": "https://developers.hubspot.com/",
-      "status": "tested"
+      "status": "reachability"
     }
   ],
   "uncertainties": [

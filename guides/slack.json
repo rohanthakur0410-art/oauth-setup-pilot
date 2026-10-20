@@ -23,31 +23,36 @@
     },
     {
       "title": "Enable public distribution",
-      "detail": "Follow Slack's guide to distributing apps publicly - this is a stated prerequisite before you can even submit for Marketplace review."
+      "detail": "Follow Slack's guide to distributing apps publicly - this is a stated prerequisite before you can even submit for Marketplace review.",
+      "source": "https://docs.slack.dev/slack-marketplace/distributing-your-app-in-the-slack-marketplace"
     },
     {
       "title": "Reach the install prerequisite",
-      "detail": "Your app must be installed on 10 or more active workspaces (used in the past 28 days, not sandboxes) and tested on them. Apps below this bar are blocked from submitting."
+      "detail": "Your app must be installed on 10 or more active workspaces (used in the past 28 days, not sandboxes) and tested on them. Apps below this bar are blocked from submitting.",
+      "source": "https://docs.slack.dev/slack-marketplace/distributing-your-app-in-the-slack-marketplace"
     },
     {
       "title": "Prepare review material",
-      "detail": "Provide test account credentials (with dummy data) for your service and any connected third-party service; a short video showing installation, the full OAuth flow, setup, and uninstallation is requested to speed up review."
+      "detail": "Provide test account credentials (with dummy data) for your service and any connected third-party service; a short video showing installation, the full OAuth flow, setup, and uninstallation is requested to speed up review.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide"
     },
     {
       "title": "Submit from app settings",
-      "detail": "Submit from the Submit to the Slack Marketplace section of your app's configuration page. Automated checks run first; fix what they flag, then your app enters the manual review."
+      "detail": "Submit from the Submit to the Slack Marketplace section of your app's configuration page. Automated checks run first; fix what they flag, then your app enters the manual review.",
+      "source": "https://docs.slack.dev/slack-marketplace/distributing-your-app-in-the-slack-marketplace"
     },
     {
       "title": "Survive the two-stage review",
-      "detail": "Preliminary review (listing info, scopes rationale, installability) takes up to 10 business days and your queue position resets on every resubmission at this stage. Functional review (a reviewer installs and tests) takes up to 10 weeks for new submissions."
+      "detail": "Preliminary review (listing info, scopes rationale, installability) takes up to 10 business days and your queue position resets on every resubmission at this stage. Functional review (a reviewer installs and tests) takes up to 10 weeks for new submissions.",
+      "source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide"
     }
   ],
   "requirements": [
     "A Slack workspace you can develop in",
-    "A fully functional, publicly available, installable app",
-    "10+ active (non-sandbox) workspaces with the app installed and tested",
-    "Test account credentials with dummy data for reviewers",
-    "A demo video (strongly recommended)"
+    "For Marketplace listing: a fully functional, publicly available, installable app",
+    "For Marketplace listing: 10+ active (non-sandbox) workspaces with the app installed and tested",
+    "For Marketplace listing: test account credentials with dummy data for reviewers",
+    "For Marketplace listing: a demo video (strongly recommended)"
   ],
   "nuances": [
     "Only scopes your app already uses will be reviewed - do not request scopes for future features.",
@@ -120,7 +125,7 @@
     {
       "claim": "The app console at https://api.slack.com/apps returns HTTP 200 unauthenticated (observed 2026-10-20), though app management itself requires a Slack login.",
       "source": "https://api.slack.com/apps",
-      "status": "tested"
+      "status": "reachability"
     }
   ],
   "uncertainties": [
