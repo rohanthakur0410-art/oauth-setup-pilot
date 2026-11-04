@@ -1,0 +1,129 @@
+{
+  "slug": "supabase",
+  "app_name": "Supabase",
+  "website": "https://supabase.com",
+  "developer_console": "https://supabase.com/dashboard",
+  "difficulty": "easy",
+  "difficulty_reason": "Provider-side setup is one short form: organization settings > OAuth Apps > Add application, pick scopes, Confirm. The real work is implementing the OAuth flow in your own app, which is your code, not Supabase configuration.",
+  "setup_time": "~10 minutes",
+  "approval": {
+    "required": false,
+    "kind": "none for the OAuth app itself; Supabase-coordinated listing for the in-Dashboard Install Integration button",
+    "wait": "none for the OAuth app; undocumented for the optional Install Integration listing",
+    "notes": "The official build guide describes creating and publishing an OAuth app with no review step anywhere, and the marketplace blog post says the integrations marketplace is open to everyone - after your submission you can share the app with your own users via your own Connect Supabase button. The optional in-Dashboard Install Integration button is not self-serve: the partner guide has you send endpoint URLs to Supabase and exchange signing keys with them manually, with no documented criteria or timeline.",
+    "requirement": "optional",
+    "wait_basis": "unknown",
+    "wait_short": "none for the app; undocumented if you want the Install button"
+  },
+  "summary": "One of the lighter OAuth provider setups: a single Add application form in your Supabase organization's settings, scopes chosen at creation, no documented review, and you drive users through your own Connect Supabase button. Two honest caveats: the optional in-Dashboard Install Integration button requires manual coordination with Supabase (key exchange, shared endpoints, no documented timeline), and Supabase strongly recommends PKCE for the flow.",
+  "steps": [
+    {
+      "title": "Open your organization's OAuth Apps settings",
+      "detail": "Sign in to the Supabase dashboard, open your organization's settings, and navigate to the OAuth Apps tab.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration"
+    },
+    {
+      "title": "Add the application",
+      "detail": "Click Add application in the upper-right, fill in the required details (including redirect URI and the scopes your integration needs - scopes are chosen here, not in the authorize request), and click Confirm.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration/oauth-scopes"
+    },
+    {
+      "title": "Publish the app",
+      "detail": "The build guide refers to using the OAuth flow 'once you've published your OAuth App'. The docs do not detail the exact publish control in the dashboard - treat the precise click-path as an uncertainty and follow the console's own prompts.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration"
+    },
+    {
+      "title": "Add a Connect Supabase button to your UI",
+      "detail": "Supabase asks that the button follow the design guidelines in its brand assets. This button is yours - no Supabase coordination needed.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration"
+    },
+    {
+      "title": "Redirect users to the authorize URL",
+      "detail": "Send the user to https://api.supabase.com/v1/oauth/authorize with client_id, redirect_uri, response_type=code, state, and optionally organization_slug to pre-select an org. Supabase strongly recommends PKCE (code_challenge + code_challenge_method=S256). redirect_uri and state together cannot exceed 4 kB. The old scope query parameter is deprecated - scopes come from the app configuration.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration"
+    },
+    {
+      "title": "Exchange the code and store tokens",
+      "detail": "On the callback, POST to https://api.supabase.com/v1/oauth/token as application/x-www-form-urlencoded with grant_type=authorization_code, the code, the exact same redirect_uri, and the PKCE code_verifier if used; client_id and client_secret go in the basic-auth header. Store the access and refresh tokens; refresh via the same endpoint and handle HTTP 401 (a revoked grant kills the refresh token).",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration"
+    }
+  ],
+  "requirements": [
+    "A Supabase account with an organization (free tier is enough)",
+    "At least one redirect URI for the OAuth callback",
+    "A decision on which Management API scopes the integration needs (set at app creation)",
+    "PKCE support in your OAuth client (Supabase strongly recommends it)"
+  ],
+  "nuances": [
+    "Scopes are configured on the app, not in the authorize request - the scope query parameter is deprecated. Updating scopes later works, but existing users must re-authorize before new scopes apply to their tokens.",
+    "redirect_uri and state together cannot exceed 4 kB; dynamically generated redirect URLs are supported by encoding the target in the state parameter.",
+    "If a user revokes access, refresh tokens stop working and access tokens fail with HTTP 401 - handle that explicitly.",
+    "Supabase's docs note current limitations: only some Management API features are available to OAuth apps until fine-grained access control rolls out.",
+    "For something built only for yourself or your team, skip OAuth apps entirely - a Management API personal access token is the documented path."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Expecting the in-Dashboard Install Integration button to be self-serve like the OAuth app itself.",
+      "solution": "Plan for manual coordination with Supabase: the partner guide has you share endpoint URLs and exchange staging/production signing keys with them, with no documented timeline. Ship your own Connect Supabase button first - it needs no coordination."
+    },
+    {
+      "problem": "Adding scopes later and assuming connected users get them.",
+      "solution": "Scope changes only apply after each user re-authorizes; version your scopes at creation and prompt re-consent when they change."
+    }
+  ],
+  "agent_can_do": [
+    "Draft the registration values (name, redirect URIs, scope set)",
+    "Implement the authorize redirect, PKCE, callback and token-refresh code",
+    "Draft the Connect Supabase button against the brand guidelines",
+    "Prepare the endpoint pair (redirect record + handler) the partner flow needs"
+  ],
+  "human_must_do": [
+    "Create the OAuth app in the dashboard while signed in (org settings > OAuth Apps)",
+    "Store the client secret securely outside the repo",
+    "Coordinate with Supabase directly if you want the in-Dashboard Install Integration button"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating an OAuth app is a single self-serve form: organization settings > OAuth Apps tab > Add application > fill details > Confirm; no review step appears anywhere in the registration documentation.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The authorize URL is https://api.supabase.com/v1/oauth/authorize with client_id, redirect_uri, response_type=code and state; redirect_uri + state are capped at 4 kB together; PKCE is strongly recommended; the scope query parameter is deprecated.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Token exchange is POST https://api.supabase.com/v1/oauth/token (form-encoded, client_id/client_secret as basic auth); revoked grants make refresh tokens fail and access tokens return HTTP 401.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Scopes are set when the OAuth app is created and can be updated later, but existing users must re-authorize for new scopes to apply.",
+      "source": "https://supabase.com/docs/guides/integrations/build-a-supabase-oauth-integration/oauth-scopes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The in-Dashboard Install Integration button requires manual coordination with Supabase: partners send their redirect endpoint URLs and exchange staging/production EC P-256 public keys and key IDs; key rotation is manual for now.",
+      "source": "https://supabase.com/docs/guides/integrations/partner-integration-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Supabase states the integrations marketplace is open to everyone and that after your submission is complete you can share the integration with your own users via your own button.",
+      "source": "https://supabase.com/blog/supabase-integrations-marketplace",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "https://supabase.com/dashboard responds with HTTP 200 (client-rendered shell); creating an OAuth app requires a signed-in Supabase account with an organization.",
+      "source": "https://supabase.com/dashboard",
+      "status": "reachability"
+    }
+  ],
+  "uncertainties": [
+    "Supabase publishes no explicit statement that OAuth apps need no approval; this conclusion comes from the complete absence of any review step in the official build guide.",
+    "The docs reference publishing the app but do not show the exact dashboard control for it; the precise click-path after Confirm is unverified.",
+    "The Install Integration listing has no documented criteria, cost, or timeline - coordination happens directly with Supabase."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-04"
+}
