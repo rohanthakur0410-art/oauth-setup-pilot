@@ -1,0 +1,140 @@
+{
+  "slug": "figma",
+  "app_name": "Figma",
+  "website": "https://www.figma.com",
+  "developer_console": "https://www.figma.com/developers/apps",
+  "difficulty": "medium",
+  "difficulty_reason": "No single hard step, but several configuration surfaces: a multi-page modal (general, credentials, granular scopes with per-scope reasoning, description), a private/public choice, and - for public apps - testing instructions and a review submission. Rating configuration complexity only; the public review burden is rated separately under approval.",
+  "setup_time": "~20 minutes (private); longer for a public submission (description, testing instructions, optional video)",
+  "approval": {
+    "required": false,
+    "kind": "Figma app review for PUBLIC apps only; private apps publish without review",
+    "wait": "none for private; undocumented for public (Figma's FAQ says reviewers aim to be 'reasonably prompt' and reply by email - no committed timeline)",
+    "notes": "Since the November 17, 2025 platform changes, every OAuth app is created in draft and must be published: private apps (team/org only) publish instantly with no review, public apps (any Figma user) require Figma's review against the App Review Guidelines, and later configuration changes to a published public app trigger re-review. Existing pre-September-23-2025 apps had to re-publish by November 17, 2025 or fall back to draft and lose API access.",
+    "requirement": "conditional",
+    "wait_basis": "unknown",
+    "wait_short": "none private; undocumented for public"
+  },
+  "summary": "A two-track setup: a private OAuth app for your own team or organization is a ~20-minute, no-review configuration flow, while a public app (usable by any Figma account) adds Figma's human review with no committed timeline. Either way you pick granular scopes and justify each one. Two traps stand out: the client secret is shown exactly once, and authorization codes expire 30 seconds after issue - the token exchange has to happen server-side, immediately.",
+  "steps": [
+    {
+      "title": "Create the app in My Apps",
+      "detail": "Go to figma.com/developers/apps (or My Apps in the toolbar), click Create a new app, enter a name, and select the team or organization that will own the app - ownership is required since the November 2025 platform changes. App users do not need to belong to that team or organization.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    },
+    {
+      "title": "Copy the client secret immediately",
+      "detail": "Figma shows the Client ID and Client Secret right after creation, and this is the only time the secret is ever shown. Store it securely before clicking Done; the app now exists in draft state, testable only by you and plan admins.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    },
+    {
+      "title": "Configure credentials and granular scopes",
+      "detail": "In the configuration modal, add every redirect URL (token exchange only works with these exact URLs), then select the granular scopes your endpoints need - Figma replaced the broad files:read/file_read scopes with granular ones like file_content:read - and provide a reason for each scope you select.",
+      "source": "https://developers.figma.com/docs/rest-api/republish-oauth-apps/"
+    },
+    {
+      "title": "Publish private, or submit public for review",
+      "detail": "On the Publish page choose: Private - click Publish, done, no review, usable by your team/org. Public - add logo and description, write testing instructions (plus optional video and trial access) for the reviewer, accept the App Review Guidelines, and Submit for review; Figma emails the outcome. Configuration changes to a published public app trigger re-review.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    },
+    {
+      "title": "Send the user through the authorize URL in a browser",
+      "detail": "Direct the user to https://www.figma.com/oauth with client_id, redirect_uri, scope (a subset of the configured scopes, comma- or space-separated), state, and response_type=code. PKCE (code_challenge, S256 only) is optional but recommended. The flow must run in a web browser - WebView inside your app is not supported.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    },
+    {
+      "title": "Exchange the code within 30 seconds",
+      "detail": "Authorization codes expire 30 seconds after issue: POST to https://api.figma.com/v1/oauth/token (form-encoded, HTTP Basic auth with base64(client_id:client_secret)) with redirect_uri, code, grant_type=authorization_code, and code_verifier if you used PKCE - immediately, server-side, on the callback.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    },
+    {
+      "title": "Store tokens and refresh carefully",
+      "detail": "Access tokens expire after 90 days; refresh with POST /v1/oauth/refresh. Figma keeps only ONE access token per user per app - refreshing invalidates the previous token, so always persist and use the newest. Read user_id_string, not the deprecated numeric user_id (precision-unsafe).",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/"
+    }
+  ],
+  "requirements": [
+    "A Figma account plus a team or organization to own the app (ownership is mandatory)",
+    "A callback endpoint URL you control for the token exchange",
+    "A granular scope list matching your endpoints, with a written reason per scope",
+    "For public apps: logo, description, testing instructions for the reviewer, and compliance with the App Review Guidelines"
+  ],
+  "nuances": [
+    "The client secret is displayed exactly once at creation - lose it and you rotate/re-create.",
+    "Authorization codes expire 30 seconds after issue; exchange immediately or the grant fails even though the code looks valid.",
+    "Only one access token exists per user per app: refreshing invalidates the previous token, so concurrent workers must share the newest token.",
+    "OAuth consent must happen in a real browser; embedded WebViews are not supported.",
+    "Pre-September-23-2025 apps that were not re-published by November 17, 2025 fell back to draft and lost API access; migrating from files:read/file_read to a granular subset does not force user re-authentication.",
+    "Changing the configuration of a published public app triggers re-review.",
+    "REST API rate limits now vary by endpoint tier, Figma plan and seat type, and also apply to personal access tokens."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Token exchange fails with what looks like a valid code.",
+      "solution": "Codes live only 30 seconds. Exchange server-side the moment the callback arrives; never queue or batch the exchange."
+    },
+    {
+      "problem": "A second refresh stops the first integration worker from calling the API.",
+      "solution": "Figma keeps one access token per user per app and refreshing kills the old one. Centralize token storage so every worker reads the latest token."
+    },
+    {
+      "problem": "Public app stuck or rejected in review.",
+      "solution": "Reviewers test with your testing instructions - provide precise steps, a demo video, and free trial access/credentials, and check the App Review Guidelines before submitting. Figma replies by email; there is no documented timeline."
+    }
+  ],
+  "agent_can_do": [
+    "Map your endpoints to the granular scope list and draft the per-scope justifications",
+    "Implement the authorize URL, PKCE, immediate code exchange and single-token refresh handling",
+    "Draft the public-submission package: description, testing instructions, demo outline",
+    "Plan migration off files:read/file_read to granular scope subsets"
+  ],
+  "human_must_do": [
+    "Create and configure the app in My Apps (a team or organization must own it)",
+    "Copy and store the client secret at creation time",
+    "Submit the public app for review and answer Figma's review emails"
+  ],
+  "evidence": [
+    {
+      "claim": "Apps are created at figma.com/developers/apps with a required team/organization owner; the client secret is shown only once; apps start in draft (testable by you and plan admins); private apps publish without review; public apps are reviewed by Figma, and re-configuration of a published public app requires re-review.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Public submissions require testing instructions (plus optional video and trial credentials) and acceptance of the App Review Guidelines; approval arrives by email with no committed timeline (FAQ: reviewers aim to be 'reasonably prompt').",
+      "source": "https://developers.figma.com/docs/updates-to-figmas-developer-platform/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The November 17, 2025 platform changes required re-publishing of pre-September-23-2025 apps (otherwise they return to draft and lose API access), mandatory app ownership, and granular scopes with per-scope reasoning replacing files:read/file_read (subset migration needs no user re-authentication).",
+      "source": "https://developers.figma.com/docs/rest-api/republish-oauth-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Authorization codes expire 30 seconds after issue; token exchange is POST https://api.figma.com/v1/oauth/token with HTTP Basic client credentials; access tokens live 90 days; only one access token per user per app exists and refreshing invalidates the previous one; user_id_string replaces the deprecated numeric user_id.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The OAuth consent flow must run in a web browser - WebView access is not supported - and PKCE with S256 is optional but recommended.",
+      "source": "https://developers.figma.com/docs/rest-api/oauth-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Figma's App Review Guidelines govern public app approval.",
+      "source": "https://help.figma.com/hc/en-us/articles/34963247780247-App-review-guidelines",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app console at https://www.figma.com/developers/apps responds (HTTP 200); creating an app requires a signed-in Figma account.",
+      "source": "https://www.figma.com/developers/apps",
+      "status": "reachability"
+    }
+  ],
+  "uncertainties": [
+    "Public review duration is undocumented - Figma's FAQ says reviewers aim to be 'reasonably prompt' and reply by email, with no committed timeline or SLA.",
+    "Opt-in Community listing of approved public apps was announced as 'later this year' in the November 2025 update; its current rollout state is unverified.",
+    "Review pass criteria are at Figma's discretion under the App Review Guidelines; the guidelines themselves can change."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-06"
+}
