@@ -1,0 +1,143 @@
+{
+  "slug": "shopify",
+  "app_name": "Shopify",
+  "website": "https://www.shopify.com",
+  "developer_console": "https://www.shopify.com/partners",
+  "difficulty": "medium",
+  "difficulty_reason": "Several configuration surfaces (app versions with URLs and scopes, compliance webhooks, listing content, a 1200x1200 icon spec, contact details) but no individually hard step, and Shopify's CLI/templates handle the token flow for you. Rating configuration complexity only; the public App Store review burden is rated separately under approval.",
+  "setup_time": "~30 minutes to a working development-store install",
+  "approval": {
+    "required": false,
+    "kind": "Shopify App Store review, required only for PUBLIC distribution (listed or unlisted); development-store installs and single-merchant custom apps need no review",
+    "wait": "no committed timeline from Shopify; the submission-confirmation email has cited 'up to 2 weeks', while Shopify staff decline to give timeframes and community reports run 2-6+ weeks during submission-volume spikes",
+    "notes": "Review is triggered only by choosing public distribution - even an unlisted public app must pass review before multiple merchants can install it. Statuses flow Draft -> Submitted -> (Paused if core requirements fail) -> Reviewed -> Published, with email at each transition. Repeat failed exchanges trigger escalating cooldown periods. Two submission limits apply: only one new app per organization in review at a time, and organizations with published apps need 10+ paid installs on each before submitting another new app. Access to protected customer data is a SEPARATE approval that cannot be requested while the app is under review.",
+    "requirement": "conditional",
+    "wait_basis": "unknown",
+    "wait_short": "none for dev stores; weeks for public"
+  },
+  "summary": "The friendliest split in this library: building and installing on development stores is fully self-serve (~30 minutes, no review), and Shopify's CLI and app templates handle the OAuth token flow for you. The gate appears only when you want public distribution - then a human App Store review applies, with automated pre-checks, an AI self-review tool, email-driven fix cycles, escalating cooldowns for repeat failures, and no committed timeline. Plan the review, not the setup, if you are heading to the App Store.",
+  "steps": [
+    {
+      "title": "Create a Partner account and open the Dev Dashboard",
+      "detail": "Sign up free at shopify.com/partners. All app management - creation, versions, installs, review - happens in the Dev Dashboard. You need a user with app development permissions.",
+      "source": "https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
+    },
+    {
+      "title": "Create the app",
+      "detail": "In the Dev Dashboard: Apps -> Create app -> Start from Dev Dashboard, name it, Create. Note Shopify's own steer: apps headed for the App Store should be built with Shopify CLI instead, which scaffolds the project and wires up Shopify managed installation.",
+      "source": "https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
+    },
+    {
+      "title": "Release a version with URLs and scopes",
+      "detail": "A version is a snapshot of your app's configuration; the app needs at least one released version before it can be installed anywhere. Set the App URL, webhooks API version, and access scopes. Scopes touching protected customer data require a separate approval.",
+      "source": "https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard"
+    },
+    {
+      "title": "Install on a development store and test the OAuth grant",
+      "detail": "Create a development store, then from the app's overview page click Install app and pick the store. You should land on the OAuth grant screen - if you don't, your App URL or redirect URLs are wrong, and Shopify will not approve the app later until that flow works. CLI-built apps get Shopify managed installation and skip this failure mode.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review"
+    },
+    {
+      "title": "Authenticate API calls - don't hand-roll OAuth",
+      "detail": "Shopify is explicit: most apps should not implement the token flow by hand. Shopify CLI and the official app templates handle authentication for the GraphQL Admin API; other Shopify APIs issue their own token types.",
+      "source": "https://shopify.dev/docs/apps/build/authentication-authorization"
+    },
+    {
+      "title": "Complete the App Store review page (public distribution only)",
+      "detail": "Set URLs (no 'Shopify' in domains or contact emails), subscribe to compliance webhooks, upload a 1200x1200 JPEG/PNG icon, provide API and emergency contacts, and create at least one listing with a primary language. Then run the automated checks and the AI self-review against your codebase - both must pass before submission.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/submit-app-for-review"
+    },
+    {
+      "title": "Submit and work the review",
+      "detail": "Submit from the App Store review page. Watch the status banner: Paused means fix core issues and Submit fixes; Reviewed means your reviewer needs answers - reply to their email to continue. Address EVERY piece of feedback in one resubmit; repeated partial fixes trigger escalating cooldowns.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/review-process"
+    }
+  ],
+  "requirements": [
+    "A free Shopify Partner account with app development permissions",
+    "A development store for testing",
+    "Hosting for your App URL and redirect URLs",
+    "A scopes decision (protected customer data needs separate approval)",
+    "For public distribution: listing content, 1200x1200 icon, compliance webhook subscriptions, emergency contact, and a working OAuth install flow"
+  ],
+  "nuances": [
+    "Review applies to public distribution only - but 'unlisted' public apps are NOT exempt: any app installed by multiple merchants must pass review.",
+    "Single-merchant custom apps and development-store installs skip review entirely.",
+    "Shopify staff decline to commit to review timelines; the submission-confirmation email has cited 'up to 2 weeks', and community reports run 2-6+ weeks during volume spikes.",
+    "Submission limits: one new app per organization in review at a time, and every published app needs 10+ paid installs before you can submit another new one (install counts refresh once a day).",
+    "Protected customer data approval is a separate track and CANNOT be requested while the app is under review - sequence it before submitting.",
+    "Repeat failed review exchanges trigger cooldowns that get longer each time; during a cooldown the app is Paused and cannot be resubmitted until the date in the status banner.",
+    "App icon must be exactly 1200x1200 pixels, JPEG or PNG; 'Shopify' (or misspellings of it) is banned from your domains and contact emails.",
+    "The AI self-review only covers requirements checkable from your codebase; listing content, live behavior and UX are still verified by humans after submission."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Installing on the dev store never shows the OAuth grant screen.",
+      "solution": "Your App URL or allowed redirect URLs are misconfigured. Fix them and retest - or use Shopify CLI's managed installation, which handles this automatically. An app whose install flow doesn't reach the grant screen will not be approved."
+    },
+    {
+      "problem": "App stuck in Paused or bouncing between submissions.",
+      "solution": "Address every reviewer point in a single resubmit (use the per-requirement responses on the review page) and pass the automated checks + AI self-review before resubmitting. Partial fixes are what trigger escalating cooldowns."
+    },
+    {
+      "problem": "Can't submit a second app: status shows Submission limited.",
+      "solution": "Either your organization already has a new app in review (wait for publication or cooldown, or withdraw it if it's still waiting on a reviewer), or a published app has fewer than 10 paid installs - hit that threshold first; counts update once a day."
+    }
+  ],
+  "agent_can_do": [
+    "Scaffold the app with Shopify CLI and wire authentication via the official templates",
+    "Run the automated checks and AI self-review, then fix what they flag",
+    "Draft the listing content, testing instructions and reviewer credentials package",
+    "Advise on scope selection and whether protected customer data is really needed"
+  ],
+  "human_must_do": [
+    "Create the Partner account and the app in the Dev Dashboard",
+    "Submit the app for review and reply to reviewer emails",
+    "Provide test-store credentials for the reviewer",
+    "Request protected customer data access if the app needs it"
+  ],
+  "evidence": [
+    {
+      "claim": "Apps are created free in the Dev Dashboard (Apps -> Create app); a released version (App URL, webhooks API version, scopes) is required before any installation; development-store installs are self-serve via the Install app button.",
+      "source": "https://shopify.dev/docs/apps/build/dev-dashboard/create-apps-using-dev-dashboard",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Public app review flows Draft -> Submitted -> (Paused for core-requirement failures, resumable via Submit fixes) -> Reviewed (reviewer dialogue by email) -> Published; withdrawal is possible while waiting on a reviewer.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/review-process",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Public submissions require compliance webhook subscriptions, a 1200x1200 icon, API and emergency contacts, a listing with a primary language, and passing automated checks; submission limits (one new app in review per organization; 10+ paid installs on each published app) and escalating cooldowns for repeat failures are documented.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/submit-app-for-review",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Before submitting, the app must be production-ready, tested on a development store, and its App URL/redirects must reach the OAuth grant screen; an AI self-review tool checks code-evaluable requirements pre-submission.",
+      "source": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Shopify explicitly says most apps should not implement OAuth by hand - the CLI and app templates handle the token flow for the GraphQL Admin API.",
+      "source": "https://shopify.dev/docs/apps/build/authentication-authorization",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Shopify commits to no review timeframe: staff state they cannot provide estimates during high submission volume, the confirmation email has cited 'up to 2 weeks', and community reports run 2-6+ weeks; even unlisted public apps require review before multi-merchant installation.",
+      "source": "https://community.shopify.dev/t/unlisted-shopify-app-review-required-before-installation/33101",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Partner entry point at https://www.shopify.com/partners responds (HTTP 200); account creation requires a human signup.",
+      "source": "https://www.shopify.com/partners",
+      "status": "reachability"
+    }
+  ],
+  "uncertainties": [
+    "Actual review duration is volatile and volume-dependent - anywhere from days to 6+ weeks in recent community reports; there is no SLA.",
+    "The AI self-review tool is new and covers only code-checkable requirements; its effect on real review times is unproven.",
+    "Listing visibility tiers (fully visible vs limited) and App Store content requirements change over time."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-09"
+}
