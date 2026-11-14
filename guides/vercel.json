@@ -1,0 +1,148 @@
+{
+  "slug": "vercel",
+  "app_name": "Vercel",
+  "website": "https://vercel.com",
+  "developer_console": "https://vercel.com/dashboard/integrations/console",
+  "difficulty": "medium",
+  "difficulty_reason": "form-driven setup plus a real OAuth install flow to build; no code review for community distribution",
+  "setup_time": "1-2 hours to a shareable community integration (form + OAuth redirect flow); marketplace listing is a separate, much longer game",
+  "approval": {
+    "required": false,
+    "kind": "Vercel marketplace listing review, required only to appear on the public Integrations marketplace; connectable account integrations get a Community badge and are installable externally (your site, deploy button) without listing",
+    "wait": "no documented timeline; the review is email-initiated, human-run, and ends in a scheduled walkthrough call",
+    "notes": "The model is inverted compared to most providers: you distribute FIRST and list later. A created connectable account integration gets a Community badge - installable by external users through your site or the Vercel deploy button, but absent from the marketplace. Listing on the public Integrations page requires at least 500 active installations (accounts with the integration installed), then an email to integrations@vercel.com requesting review, then Vercel feedback or additional testing, then a final walkthrough call. The Create Integration form must be completed in full before you can submit for review. Native integrations additionally need product creation coordinated with Vercel (provider sign-up, shared Slack channel) and an integration server implementing the Marketplace Provider API.",
+    "requirement": "conditional",
+    "wait_basis": "unknown",
+    "wait_short": "none to share community installs; undocumented for listing"
+  },
+  "summary": "Vercel flips the usual approval model. Creating an integration is self-serve in the Integrations Console, and a connectable account (OAuth) integration is externally installable almost immediately under a Community badge - but the marketplace listing is gated behind 500 ACTIVE installations plus an email-initiated human review that ends in a walkthrough call. Plan distribution before listing, not the other way round.",
+  "steps": [
+    {
+      "title": "Open the Integrations Console",
+      "detail": "From your Vercel dashboard, pick your account/team in the team switcher, open Integrations in the sidebar, select Integrations Console, then Create. Creating the integration itself is self-serve.",
+      "source": "https://vercel.com/docs/integrations/create-integration"
+    },
+    {
+      "title": "Complete the Create Integration form in full",
+      "detail": "Name (64 chars), URL slug (32 chars, becomes vercel.com/integrations/<slug>), developer legal name, a private contact email AND a public support email, short description (80 chars), logo (1:1 non-transparent PNG, min 256px), and category. The form must be complete before you can submit the integration for review.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration"
+    },
+    {
+      "title": "Supply the five required listing URLs",
+      "detail": "Website, documentation, EULA, privacy policy, and support URLs. All five are shown to users before they install; the EULA and privacy policy are obligations under the Integrations Marketplace Agreement (section 2.4), not decoration.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration"
+    },
+    {
+      "title": "Build the OAuth install flow on your Redirect URL",
+      "detail": "Your Redirect URL must exchange the provided code for a Vercel API access token, render a responsive popup UI, and handle project provisioning before redirecting back to Vercel. localhost URLs are allowed for development. If your app sets a Cross-Origin-Opener-Policy header, it must be unsafe-none or the dashboard cannot monitor the popup.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration"
+    },
+    {
+      "title": "Request minimal API scopes",
+      "detail": "Scopes are optional and per-scope permission levels are None, Read, or Read/Write. Take only what the integration needs: after activation you are accountable for the privacy, security and integrity of the user data those scopes expose under Vercel's Shared Responsibility Model.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration"
+    },
+    {
+      "title": "Prepare listing media and copy",
+      "detail": "Overview (768 chars, markdown) plus 1-8 gallery images at exactly 1920x1080px (16:9), readable in light and dark mode, key content inside a 20% safe zone. The first gallery image feeds the auto-generated Open Graph image.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration"
+    },
+    {
+      "title": "Grow to 500 installs, then request the listing review by email",
+      "detail": "Share the Community-badge integration via your site or the deploy button until it has at least 500 active installations. Work through the approval checklist for your integration type (native vs connectable account), then email integrations@vercel.com. Expect feedback or additional testing requests, then a scheduled walkthrough call before listing.",
+      "source": "https://vercel.com/docs/integrations/create-integration/approval-checklist"
+    }
+  ],
+  "requirements": [
+    "A Vercel account and team",
+    "Hosting for your Redirect URL (OAuth code exchange + install popup UI)",
+    "Five listing URLs: website, documentation, EULA, privacy policy, support",
+    "Logo (1:1 non-transparent PNG, min 256px) and 1-8 gallery images at 1920x1080px",
+    "A legal developer name and a public support email you actually monitor",
+    "For marketplace listing: at least 500 active installations first",
+    "For native integrations: provider sign-up with Vercel plus an integration server implementing the Marketplace Provider API"
+  ],
+  "nuances": [
+    "Distribution precedes listing: Community-badge integrations are installable by anyone via your site or the Vercel deploy button but never appear in marketplace search - the 500-active-installs threshold exists to prove traction first.",
+    "The review is unusually human: it starts with an email to integrations@vercel.com and ends with a scheduled walkthrough call. There is no self-serve submit button for listing.",
+    "The approval checklist differs by integration type - native (Marketplace API) and connectable account (redirect URL + OAuth) have separate checklists covering listing quality, install flows, and post-install behavior.",
+    "Native integrations are a different, heavier track: product creation is coordinated through a provider sign-up and a shared Slack channel with Vercel, and billing/usage reporting obligations apply.",
+    "The 500-install threshold and form requirements are documented as of the docs' last update; thresholds like this have changed over time, so re-check before building a launch plan around them.",
+    "The project selector shown BEFORE the install popup is a security control, not the project mapping UI - the checklist explicitly warns it does not define which projects the integration is installed on."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Integration is built and shared, but there is no way to get marketplace-listed.",
+      "solution": "That is by design: listing requires at least 500 active installations gathered through the Community badge (your site or the deploy button), then an email to integrations@vercel.com. There is no listing submit button in the console."
+    },
+    {
+      "problem": "The install popup breaks or the Vercel dashboard cannot track its state.",
+      "solution": "If your app sends a Cross-Origin-Opener-Policy header, set it to unsafe-none. Also test the three checklist flows: brand-new user without an account, existing account, and logged-out-of-Vercel external flow."
+    },
+    {
+      "problem": "Review request goes quiet after the email.",
+      "solution": "Vercel responds with feedback or additional testing requests before scheduling the walkthrough call. The most common gaps are checklist items: substandard gallery images, missing EULA/privacy URLs, or an install flow that fails one of the tested user paths."
+    }
+  ],
+  "agent_can_do": [
+    "Scaffold the integration server: OAuth code exchange, install popup UI, and project provisioning endpoints",
+    "Draft all listing content to the exact character limits and markdown support rules",
+    "Generate the logo and 1920x1080 gallery images to spec",
+    "Walk the type-appropriate approval checklist systematically and produce the evidence for each item"
+  ],
+  "human_must_do": [
+    "Own the Vercel account/team and accept the Marketplace Agreement terms",
+    "Provide the legal developer name and run the public support email",
+    "Do the distribution work that gets the integration to 500 active installations",
+    "Send the review request email and take the walkthrough call with Vercel"
+  ],
+  "evidence": [
+    {
+      "claim": "Integrations are created self-serve from the Integrations Console (dashboard > Integrations > Integrations Console > Create); the overall flow is create form, then (for connectable account integrations) share once approved, (for native) create a product and integration server.",
+      "source": "https://vercel.com/docs/integrations/create-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "A created connectable account integration gets a Community badge: installable by external users via your site or the Vercel deploy button, but not shown in the marketplace.",
+      "source": "https://vercel.com/docs/integrations/create-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Marketplace listing requires at least 500 active installations, then an email to integrations@vercel.com requesting review.",
+      "source": "https://vercel.com/docs/integrations/create-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The listing application requires: name (64), slug (32), developer legal name, private contact email + public support email, short description (80), logo (1:1 non-transparent PNG, min 256px), category, five URLs (website, docs, EULA, privacy, support), overview (768, markdown), and 1-8 gallery images at 1920x1080px 16:9.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Redirect URL must exchange the code for an API token, render a responsive popup UI, and provision projects; localhost is allowed for development; a Cross-Origin-Opener-Policy header must be unsafe-none.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "API scopes are optional with per-scope None/Read/Read-Write levels; least privilege is required and the developer is accountable for collected user data under the Shared Responsibility Model.",
+      "source": "https://vercel.com/docs/integrations/create-integration/submit-integration",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The approval process is: complete the type-specific checklist (native or connectable account), email integrations@vercel.com, receive feedback or additional testing requests, then schedule a final walkthrough call.",
+      "source": "https://vercel.com/docs/integrations/create-integration/approval-checklist",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Integrations Console for creating and managing integrations is reachable at the dashboard integrations console path.",
+      "source": "https://vercel.com/dashboard/integrations/console",
+      "status": "reachability"
+    }
+  ],
+  "uncertainties": [
+    "The listing review timeline is undocumented anywhere - the process (email, feedback cycles, walkthrough call) has no stated SLA, so plan for an unknown wait after reaching 500 installs.",
+    "Docs are ambiguous about whether the initial Community badge involves substantive review or follows automatically from a complete form; treat any pre-listing review as lightweight until Vercel confirms.",
+    "The 500-active-installs threshold is a policy number that can change; the docs page carrying it was last updated in 2026."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-14"
+}
