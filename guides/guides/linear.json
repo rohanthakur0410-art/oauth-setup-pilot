@@ -1,0 +1,157 @@
+{
+  "slug": "linear",
+  "app_name": "Linear",
+  "website": "https://linear.app",
+  "developer_console": "https://linear.app/settings/api/applications/new",
+  "difficulty": "easy",
+  "difficulty_reason": "one short form (developer name, app name, homepage URL, redirect URIs, optional webhook) with no review for public installability; the only real complexity is the runtime token-renewal loop, which is code, not setup",
+  "setup_time": "unknown - Linear documents no timeline; the registration itself is a single form and public distribution is a switch with no review, so the real investment is implementing the 24-hour token refresh loop",
+  "approval": {
+    "required": false,
+    "kind": "Linear Integration Directory listing: a curated submission to appear in Linear's public directory; never needed for workspaces to install a public OAuth app",
+    "wait": "no documented timeline; the review is human and curated, initiated through Linear's form and integrations@linear.app",
+    "notes": "Two things are easy to confuse. (1) Installability: setting distribution=public on the OAuth app makes it installable by any Linear workspace immediately - Linear's docs describe no review for this. (2) Directory listing: an optional curated channel. You submit Linear's form plus assets to integrations@linear.app; Linear states it accepts integrations it considers useful to the community that are built by formal companies, and generally does not accept scripts, low-effort or hobbyist apps. The criteria are qualitative and the timeline is undocumented.",
+    "requirement": "optional",
+    "wait_basis": "unknown",
+    "wait_short": "none for public installs; undocumented for directory listing"
+  },
+  "summary": "Linear is one of the friendliest setups in the library. Creating an OAuth app is a single self-serve form in workspace settings, and flipping distribution to public makes the app installable by any workspace with no review at all. The only gated surface is the Integration Directory, an optional curated listing aimed at formal companies. The real engineering work is runtime: authorization-code access tokens live 24 hours and must be renewed through rolling 30-day refresh tokens.",
+  "steps": [
+    {
+      "title": "Create the app from a dedicated management workspace",
+      "detail": "Linear recommends creating a workspace specifically to manage the OAuth2 application, because every admin of that workspace gets access to it. Apps are created from Settings > API, or directly at the workspace-agnostic creation URL.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication"
+    },
+    {
+      "title": "Fill the application form",
+      "detail": "Developer name (2-80 chars, required), user-visible client name (2-80 chars, must not contain 'Linear' or a URL), homepage or documentation URL (required, absolute), and 1-32 unique absolute redirect URIs. Optional: description (max 1000 chars) and an icon URL (at least 256x256px recommended).",
+      "source": "https://linear.app/developers/oauth-app-manifests"
+    },
+    {
+      "title": "Choose the distribution",
+      "detail": "private (the default) keeps the app installable only inside the creating workspace; public makes it installable by any Linear workspace. Neither involves a Linear review.",
+      "source": "https://linear.app/developers/oauth-app-manifests"
+    },
+    {
+      "title": "Decide grant types up front",
+      "detail": "authorization_code is always part of the app. Toggle on client credentials only for server-to-server use: it must be enabled on the app before the grant works, and it issues 30-day app-actor tokens with no refresh token. Requesting a client-credentials token replaces an existing authorization-code installation in that workspace.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication"
+    },
+    {
+      "title": "Configure webhooks only if you need them",
+      "detail": "The webhook endpoint must be a public HTTPS URL - loopback, private-network and linear.app hosts are rejected - subscribed to resource types such as Issue, Comment or OAuthAuthorization. A separate webhook signing secret can be rotated later from the app settings.",
+      "source": "https://linear.app/developers/oauth-app-manifests"
+    },
+    {
+      "title": "Build the authorization and refresh loop",
+      "detail": "Redirect users to linear.app/oauth/authorize with scope and a state value (PKCE is supported, plain or S256), exchange the returned code at api.linear.app/oauth/token, and persist BOTH tokens. Access tokens live 24 hours; each refresh returns a new access token and a new refresh token with a fresh 30-day lifetime. API calls do not extend either lifetime, and an expired access token can still be renewed while its refresh token is valid.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication"
+    },
+    {
+      "title": "Request minimal scopes",
+      "detail": "read is always present. Add write, issues:create, comments:create or timeSchedule:write only as needed; Linear says never to ask for admin unless absolutely required. Agents acting as themselves use app-actor scopes such as app:assignable or app:mentionable.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication"
+    },
+    {
+      "title": "Optionally submit to the Integration Directory",
+      "detail": "Fill Linear's submission form and send assets to integrations@linear.app: a 320x320 color icon, a 320x320 monochrome (white) icon, and 1-3 showcase images at 1600x1000. Linear curates for integrations useful to the community from formal companies.",
+      "source": "https://linear.app/docs/integration-directory"
+    }
+  ],
+  "requirements": [
+    "A Linear workspace you administer (a dedicated management workspace is recommended, since every admin gets access to the app)",
+    "A public homepage or documentation URL for the app (required by the form)",
+    "1-32 absolute redirect URIs for the OAuth callback",
+    "A public HTTPS endpoint if you want webhooks",
+    "Token storage and a refresh scheduler: access tokens expire after 24 hours",
+    "For the optional directory listing: 320x320 color and monochrome icons, 1-3 showcase images at 1600x1000, and a formal company behind the app"
+  ],
+  "nuances": [
+    "Public distribution is not the directory: distribution=public makes any workspace able to install immediately, while the Integration Directory is a separate curated listing many apps never need.",
+    "Linear migrated all OAuth apps to the refresh-token system on April 1, 2026: access tokens last 24 hours and refresh tokens carry a rolling 30-day lifetime, so credential storage and refresh coordination across processes are mandatory, not optional.",
+    "Client credentials is an opt-in toggle per app, and switching grants has side effects: a client-credentials request replaces an existing authorization-code installation in that workspace.",
+    "Rotating the client secret invalidates client-credentials tokens immediately but does NOT revoke authorization-code access/refresh pairs already issued to workspaces - those keep working and use the new secret at the next refresh.",
+    "The app creation form can be pre-populated with URL parameters or a JSON manifest, which makes reproducible setup flows and 'connect your workspace' buttons trivial to build.",
+    "Linear enforces a 1,000-token ceiling per app/workspace through asynchronous cleanup of the least-recently-used unexpired client-credentials tokens, not a hard issuance limit - a token can be cleaned up before its 30 days are over."
+  ],
+  "common_blockers": [
+    {
+      "problem": "The app works in the developer's own workspace but other workspaces cannot install it.",
+      "solution": "distribution defaults to private. Switch the app to public in its settings - no review is involved."
+    },
+    {
+      "problem": "API calls start failing with 401 a day after authorization.",
+      "solution": "By design: access tokens live 24 hours. Exchange the refresh token for a new pair and persist both values every time; the refresh token itself is rolling 30-day, so missing a refresh window means re-authorizing."
+    },
+    {
+      "problem": "The client_credentials grant returns 'Client does not support the client_credentials grant type'.",
+      "solution": "Client credentials tokens must be toggled on for the OAuth app in its settings before the grant is accepted."
+    },
+    {
+      "problem": "The directory submission gets no response or is declined.",
+      "solution": "The directory is curated toward useful integrations from formal companies; Linear generally does not accept scripts, low-effort or hobbyist apps. Email integrations@linear.app with a concrete case for inclusion."
+    }
+  ],
+  "agent_can_do": [
+    "Generate a pre-populated creation URL or JSON manifest so the app setup is one click",
+    "Implement the OAuth client: authorize redirect, code exchange, rolling refresh scheduler, and revocation handling",
+    "Map the intended API operations to the minimal scope set",
+    "Draft the directory submission copy and produce the icon and showcase assets to the exact pixel specs"
+  ],
+  "human_must_do": [
+    "Own the Linear workspace (admin) and the responsibility for what the app does with workspace data",
+    "Complete the login-gated app creation and hold the client secret",
+    "Decide private vs public distribution and whether client credentials is justified",
+    "Send the directory submission and handle any correspondence with Linear"
+  ],
+  "evidence": [
+    {
+      "claim": "OAuth apps are created self-serve from workspace settings, and Linear recommends a dedicated management workspace because every admin of the workspace gets access to the application.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "distribution is private (default, single workspace) or public (installable by other workspaces); the docs describe no review for either.",
+      "source": "https://linear.app/developers/oauth-app-manifests",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The application form requires developer.name (2-80 chars), oauth.client_name (2-80 chars, must not contain 'Linear' or a URL), oauth.client_uri (absolute URL), and 1-32 unique absolute redirect URIs; display.description is capped at 1000 chars and the icon should be at least 256x256px.",
+      "source": "https://linear.app/developers/oauth-app-manifests",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Scopes are read (always present), write, issues:create, comments:create, timeSchedule:write, and admin (which Linear says never to request unless absolutely needed), plus app-actor scopes such as app:assignable and app:mentionable.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Authorization-code access tokens live 24 hours with rolling 30-day refresh tokens (a refresh returns a new pair; API calls do not extend either lifetime); client-credentials tokens are app-actor tokens valid 30 days with no refresh token and must be toggled on for the app first.",
+      "source": "https://linear.app/developers/oauth-2-0-authentication",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Webhook endpoints must be HTTPS and must not be loopback, private-network, or linear.app hosts; subscriptions are per resource type (Issue, Comment, OAuthAuthorization, and others).",
+      "source": "https://linear.app/developers/oauth-app-manifests",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Integration Directory listing is curated: submit Linear's form plus assets (320x320 color icon, 320x320 monochrome icon, 1-3 showcase images at 1600x1000) to integrations@linear.app; Linear accepts integrations it considers useful to the community from formal companies and generally not scripts, low-effort or hobbyist apps.",
+      "source": "https://linear.app/docs/integration-directory",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app creation URL resolves unauthenticated to the Linear app shell (the form itself sits behind login, like other providers' consoles).",
+      "source": "https://linear.app/settings/api/applications/new",
+      "status": "tested"
+    }
+  ],
+  "uncertainties": [
+    "The Integration Directory review timeline is undocumented, and the acceptance criteria are qualitative ('useful to the community', 'formal companies'), so neither the wait nor the outcome can be predicted.",
+    "The docs do not state whether non-admin workspace members can create OAuth apps; assume an admin is required until verified in the console.",
+    "The docs use localhost redirect URIs in authorization examples, but whether the creation form itself accepts non-HTTPS localhost redirects is not stated - verify in the form during setup.",
+    "Whether public distribution involves any automated abuse screening before an app is installable is not documented; no review is described, but treat any undocumented gate as possible until tested."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-16"
+}
