@@ -1,0 +1,162 @@
+{
+  "slug": "stripe",
+  "app_name": "Stripe",
+  "website": "https://stripe.com",
+  "developer_console": "https://dashboard.stripe.com/settings/connect",
+  "difficulty": "easy",
+  "difficulty_reason": "registration is toggling OAuth on in Connect settings and copying a Stripe-issued client_id - no app review for connecting Standard accounts; the technical work is the token exchange, not the setup",
+  "setup_time": "unknown - Stripe documents no registration timeline; enabling OAuth and getting a test client_id is self-serve in the dashboard, while live mode requires completing account activation (business verification), whose duration is undocumented",
+  "approval": {
+    "required": false,
+    "kind": "Stripe App Marketplace review, required only to publish a Stripe App publicly on the marketplace; connecting users via Connect OAuth needs no review at all",
+    "wait": "4 business days for the marketplace app review (documented); resubmission and re-review are required after changes to the app or listing",
+    "notes": "Stripe has two distinct 'OAuth app' worlds. (1) Connect OAuth for Standard accounts: enable OAuth in Connect settings, get a client_id, connect users immediately - no review. Note that Stripe does NOT recommend OAuth for new Connect platforms (Connect Onboarding is the recommended path), and since June 2021 platforms using read_write scope cannot connect Standard accounts controlled by another platform. (2) Stripe Apps on the App Marketplace: uses the marketplace OAuth v2 flow (Stripe deprecated the Connect authentication method for apps), and public listing requires passing a human app review with a documented 4-business-day turnaround. Private apps installed only by your own team skip the marketplace and its review entirely.",
+    "requirement": "conditional",
+    "wait_basis": "documented",
+    "wait_short": "none for Connect OAuth; 4 business days for marketplace listing"
+  },
+  "summary": "Stripe is a tale of two OAuth paths, and picking the right one matters more than the setup itself. Connect OAuth (client_id from Connect settings) works immediately with no review but is explicitly not recommended for new platforms. A public Stripe App on the marketplace means a real human review with a documented 4-business-day decision, quality requirements, and test credentials handed to reviewers. Either way, live mode first requires activating your account with verified business details.",
+  "steps": [
+    {
+      "title": "Choose your path before touching settings",
+      "detail": "If you are building a Connect platform, Stripe recommends Connect Onboarding over OAuth for Standard accounts - OAuth is legacy for that use case. If you are building an integration for many Stripe users, a Stripe App (marketplace OAuth v2) is the modern route; private apps for your own team skip the marketplace entirely.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts"
+    },
+    {
+      "title": "Activate your Stripe account for live mode",
+      "detail": "Sandboxes work immediately for testing. To use any service in live mode you must verify your business and complete activation requirements; marketplace publishing additionally requires a verified email and business details.",
+      "source": "https://docs.stripe.com/get-started/account/set-up"
+    },
+    {
+      "title": "Enable OAuth in Connect settings and copy your client_id",
+      "detail": "In the dashboard's Connect OAuth onboarding options, enable onboarding accounts with OAuth, copy the Stripe-generated client_id (separate live and test IDs exist; use the sandbox client_id against sandbox accounts), and register every redirect URI - Stripe falls back to the first configured URI when the parameter is omitted.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts"
+    },
+    {
+      "title": "Complete your platform profile",
+      "detail": "Stripe requires completing your platform's profile (in Connect settings) before onboarding connected accounts - it is what users see when deciding whether to connect to your platform.",
+      "source": "https://docs.stripe.com/connect/express-accounts"
+    },
+    {
+      "title": "Build the connection flow",
+      "detail": "Send users to connect.stripe.com/oauth/authorize with response_type=code, your client_id, scope=read_write (platforms MUST use read_write; read_only is reserved for registered extensions and omission errors out), and a unique state value for CSRF protection. Users with no Stripe account create one inside the authorization flow.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts"
+    },
+    {
+      "title": "Exchange the code and store the credentials",
+      "detail": "POST the short-lived, single-use authorization code to connect.stripe.com/oauth/token with your secret key. Store the returned stripe_user_id (the connected account ID, used in the Stripe-Account header) and the refresh_token - Stripe only hands you the refresh token in this initial response, and it is needed to roll access tokens later.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts"
+    },
+    {
+      "title": "Handle disconnection both ways",
+      "detail": "Watch the account.application.deauthorized webhook to clean up when a user disconnects you, and offer disconnect yourself by POSTing client_id and stripe_user_id to connect.stripe.com/oauth/deauthorize.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts"
+    },
+    {
+      "title": "For a marketplace listing, pass the app review",
+      "detail": "Submit the listing form (using the live-mode public install URL on the marketplace OAuth v2 flow, not Connect onboarding), provide test credentials with MFA disabled and recordings of complex flows, and meet the qualitative review requirements: transparent pricing, no ads, clear navigation with no dead ends, proper loading and error states, sandbox support declared in the manifest. Expect an approval or feedback email in 4 business days; any change to the app or listing means resubmitting and passing review again.",
+      "source": "https://docs.stripe.com/stripe-apps/publish-app"
+    }
+  ],
+  "requirements": [
+    "A Stripe account; live mode requires completing activation (verified business details)",
+    "OAuth enabled in Connect settings with at least one registered redirect URI (all URIs must be pre-registered)",
+    "A completed platform profile before onboarding connected accounts",
+    "Server-side storage for stripe_user_id and refresh_token per connected account",
+    "A webhook endpoint for account.application.deauthorized events",
+    "For marketplace publishing: test credentials with MFA disabled, testing guidance covering all key features, and compliance with the app quality requirements"
+  ],
+  "nuances": [
+    "Stripe explicitly does not recommend OAuth for new Connect platforms - Connect Onboarding for Standard accounts is the recommended path, so OAuth registration is mostly a legacy/extension concern.",
+    "Since June 2021, platforms using read_write scope cannot connect Standard accounts that are controlled by another platform; extensions are unaffected.",
+    "The scope rules are inverted from intuition: platforms must request read_write, and read_only exists only for registered extensions - omitting scope shows the user an error, not a consent screen.",
+    "The refresh_token is delivered exactly once, in the initial token exchange response - lose it and you cannot roll access tokens without the user reconnecting.",
+    "For marketplace apps, Stripe deprecated the Connect authentication method entirely: apps must use the marketplace OAuth v2 authorize URL, and reviewers install through your live-mode public install link.",
+    "The 4-business-day review decision is one of the few documented review timelines in this library - but every change to the app or listing restarts it."
+  ],
+  "common_blockers": [
+    {
+      "problem": "The authorization page shows an error instead of a consent screen.",
+      "solution": "The scope parameter is missing or read_only: platforms must pass scope=read_write explicitly. Also confirm the redirect_uri matches one pre-registered in Connect settings."
+    },
+    {
+      "problem": "Connecting a user's account fails for some users only.",
+      "solution": "Since June 2021, read_write platforms cannot connect Standard accounts controlled by another platform - those users must connect through that platform's flow, not yours."
+    },
+    {
+      "problem": "Access tokens cannot be rolled after the initial connection.",
+      "solution": "The refresh_token only appears in the initial token-exchange response. If it was not persisted, the user must reconnect; store it alongside stripe_user_id from day one."
+    },
+    {
+      "problem": "Marketplace review keeps coming back with feedback.",
+      "solution": "The most common review issues are listing quality and reviewer access: provide test credentials (MFA disabled) that connect through the app installation itself, attach screen recordings of complex flows, and check the qualitative requirements - transparent pricing, no dead-end navigation, real error and loading states."
+    }
+  ],
+  "agent_can_do": [
+    "Implement the full connection flow: authorize redirect with state, code exchange, Stripe-Account header usage, and deauthorize handling",
+    "Prefill the Stripe account form via stripe_user[...] parameters to cut onboarding drop-off",
+    "Set up the deauthorized webhook handler and cleanup logic",
+    "Draft the marketplace listing content and record the testing-guidance walkthroughs to the review checklist"
+  ],
+  "human_must_do": [
+    "Own the Stripe account, complete business verification, and accept the platform's liability for connected-account fraud",
+    "Complete the platform profile and decide live vs sandbox rollout",
+    "Hold the secret API key used in token exchanges",
+    "Submit the marketplace listing and respond to review feedback within the 4-business-day cycle"
+  ],
+  "evidence": [
+    {
+      "claim": "Connect OAuth setup is self-serve in the dashboard: enable OAuth in the Connect OAuth onboarding options, copy the Stripe-generated client_id (separate live and test IDs), and pre-register all redirect URIs.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Stripe does not recommend OAuth for new Connect platforms (Connect Onboarding is recommended instead), and since June 2021 platforms using read_write scope cannot connect platform-controlled Standard accounts.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Platforms must pass scope=read_write; read_only is available only to registered extensions, and omitting scope or requesting read_only shows an error instead of the authorization page.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The token exchange returns stripe_user_id and a refresh_token that is only available in that initial response; disconnection works via the account.application.deauthorized webhook and the oauth/deauthorize endpoint.",
+      "source": "https://docs.stripe.com/connect/oauth-standard-accounts",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Completing the platform's profile is a prerequisite for onboarding connected accounts.",
+      "source": "https://docs.stripe.com/connect/express-accounts",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Live mode requires verifying the business and completing activation requirements; marketplace publishing requires a verified email and business details.",
+      "source": "https://docs.stripe.com/get-started/account/set-up",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Public marketplace listing requires a human app review with a documented 4-business-day email decision; changes to the app or listing require resubmission and passing review again; reviewers need test credentials with MFA disabled and must connect through the app installation (marketplace OAuth v2), not Connect onboarding.",
+      "source": "https://docs.stripe.com/stripe-apps/publish-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app review enforces qualitative requirements: transparent pricing, no ads, clear navigation without dead ends, real loading/error states, declared sandbox support in the manifest.",
+      "source": "https://docs.stripe.com/stripe-apps/review-requirements",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Connect settings area of the Stripe dashboard resolves unauthenticated (the settings themselves sit behind login, like other providers' consoles).",
+      "source": "https://dashboard.stripe.com/settings/connect",
+      "status": "tested"
+    }
+  ],
+  "uncertainties": [
+    "How long account activation (business verification) takes is undocumented - it varies by country and business type, so the live-mode wait is unknown even though the marketplace review wait is not.",
+    "Whether Stripe performs any screening before a Connect OAuth client_id can connect live accounts (beyond activation and the platform profile) is not documented; no review is described, but an undocumented gate cannot be ruled out.",
+    "The June 2021 read_write restriction's exact definition of 'controlled by another platform' is not spelled out on the page - edge cases (migrated accounts, multiple platforms) are unclear.",
+    "The 4-business-day review timeline is stated for the initial decision email; total time-to-listing with feedback cycles is not bounded by the docs."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-17"
+}
