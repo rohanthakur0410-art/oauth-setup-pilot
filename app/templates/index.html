@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>OAuth app setup, rated</h1>
-<p class="lede">Registering a provider OAuth app and getting it <em>approved</em> is the hidden cost of "connect an app". Five providers rated below; type any app and the agent investigates its official docs live, citing every claim and flagging what it could not verify.</p>
+<p class="lede">Registering a provider OAuth app and getting it <em>approved</em> is the hidden cost of "connect an app". {{ guides|length }} providers rated below; type any app and the agent investigates its official docs live, citing every claim and flagging what it could not verify.</p>
 
 <section class="gen">
   <form class="genrow" id="genform">
