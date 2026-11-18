@@ -1,0 +1,160 @@
+{
+  "slug": "discord",
+  "app_name": "Discord",
+  "website": "https://discord.com",
+  "developer_console": "https://discord.com/developers/applications",
+  "difficulty": "easy",
+  "difficulty_reason": "Creating an app is one short form in the Developer Portal and the OAuth2 flow is a standard authorization-code grant; the real work is implementation and the scale-gate paperwork, not console configuration.",
+  "setup_time": "unknown - Discord documents no registration timeline; creating the app and copying credentials is self-serve in the Developer Portal, while App Verification and Privileged Intent review durations are undocumented",
+  "approval": {
+    "required": false,
+    "kind": "Registering an app and running OAuth2 authorization is documented as self-serve with no review. App Verification (a portal checklist plus team-owner identity verification through Stripe) is documented as required to scale past 100 servers and to enable App Directory discovery or monetization. A separate Privileged Intent review gates message content, member and presence data once an app reaches 10,000 users.",
+    "wait": "No review timeline is documented for App Verification or for Privileged Intent review. The intents process has a documented 90-day window to apply after Discord notifies you, and granted access must be re-applied for annually.",
+    "notes": "Keep three separate gates apart. (1) Basic app creation and OAuth2: self-serve, no review documented. (2) App Verification: per Discord's help article (updated August 2024), required for an app to scale past 100 servers; the portal shows a checklist and a Verify App button, and the owning team's owner verifies their identity through Stripe. That article predates the June 2026 changes. (3) Privileged Intent review: since June 10, 2026 this is a separate process - apps reaching 10,000 or more users must apply within 90 days of notification, keep working during review, and reapply annually. Under 10,000 users the intents are a self-serve Developer Portal toggle. Some individual OAuth2 scopes are additionally restricted to approved partners.",
+    "requirement": "conditional",
+    "wait_basis": "unknown",
+    "wait_short": "no review to register; scale-gate timelines undocumented"
+  },
+  "summary": "Registration is self-serve and instant: create the app in the Developer Portal, register redirect URIs, and standard OAuth2 (identify, email, guilds and similar scopes) works with no review. The gates arrive at scale, and they changed on June 10, 2026: App Verification - a checklist plus team-owner identity verification through Stripe, documented as required to scale past 100 servers and to list in the App Directory - is now separate from Privileged Intent review, which is required when an app reaches 10,000 users and must be renewed annually. Neither review has a documented timeline.",
+  "steps": [
+    {
+      "title": "Create the app in the Developer Portal",
+      "detail": "At discord.com/developers/applications, click Create App, enter a name and press Create. You land on the General Information page with the Application ID and Public Key. New apps have a bot user enabled by default; the bot token is generated on the Bot page via Reset Token and shown only once.",
+      "source": "https://discord.com/developers/docs/quick-start/getting-started"
+    },
+    {
+      "title": "Choose installation contexts and credentials",
+      "detail": "On the Installation page, decide whether the app supports Guild Install, User Install, or both, and use the Discord Provided Link unless you need a custom one. Keep the bot token and client secret out of version control - the token cannot be viewed again without regenerating it.",
+      "source": "https://discord.com/developers/docs/quick-start/getting-started"
+    },
+    {
+      "title": "Register redirect URIs and build the authorization URL",
+      "detail": "Send users to discord.com/oauth2/authorize with response_type=code, your client_id, a url-encoded scope list, and a redirect_uri that exactly matches one registered for the app. Discord recommends (but does not require) a unique state value, and every redirect back includes an iss parameter (RFC 9207) - multi-provider apps should verify it before exchanging the code to prevent mix-up attacks.",
+      "source": "https://discord.com/developers/docs/topics/oauth2"
+    },
+    {
+      "title": "Exchange the code with a form-encoded POST",
+      "detail": "POST to discord.com/api/oauth2/token with grant_type=authorization_code, the code and the redirect_uri, authenticated with HTTP Basic or client_id/client_secret in the form body. The token and revocation endpoints accept only application/x-www-form-urlencoded - JSON bodies return an error. Access tokens expire (the documented example is 604800 seconds); store the refresh token and use grant_type=refresh_token to renew.",
+      "source": "https://discord.com/developers/docs/topics/oauth2"
+    },
+    {
+      "title": "Plan for App Verification before you scale",
+      "detail": "Discord's help article (updated August 2024) states verification is required for an app to scale past 100 servers. The Developer Portal's App Verification tab shows a checklist; when every requirement is green you click Verify App. The owning team's owner must verify their identity through Stripe and may be asked to re-verify periodically. No timeline is documented.",
+      "source": "https://support-dev.discord.com/hc/en-us/articles/23926564536471-How-Do-I-Get-My-App-Verified"
+    },
+    {
+      "title": "Treat privileged gateway intents as a separate, renewable grant",
+      "detail": "Message Content, Guild Members and Guild Presences are disabled by default. Below 10,000 users you toggle them on in the Developer Portal; at 10,000 or more users you must apply for access within 90 days of Discord's notification, and granted access requires annual re-application. Justify each intent with a concrete use case - requesting intents you cannot demonstrate a need for hurts the submission. The app keeps working and can join new servers while under review.",
+      "source": "https://docs.discord.com/developers/gateway/getting-started-with-privileged-intent-review"
+    },
+    {
+      "title": "If you want App Directory listing, verify first",
+      "detail": "Discovery in the App Directory and App Launcher requires completed App Verification, then opting into Discovery with metadata and images in the Developer Portal. Discord documents up to 24 hours for a verified, opted-in app to appear.",
+      "source": "https://docs.discord.com/developers/discovery/enabling-discovery"
+    }
+  ],
+  "requirements": [
+    "A Discord account and an app created in the Developer Portal",
+    "Every redirect URI pre-registered on the app; the authorization request must match one exactly",
+    "Form-encoded (not JSON) token exchange server-side, with secure storage for the client secret, bot token and refresh tokens",
+    "To scale past 100 servers: App Verification, including team-owner identity verification through Stripe (per Discord's August 2024 help article)",
+    "For privileged data at 10,000+ users: a justified use case per intent, re-applied for annually",
+    "For App Directory discovery: completed verification plus discovery metadata and images"
+  ],
+  "nuances": [
+    "The token and token-revocation endpoints accept only application/x-www-form-urlencoded. Sending JSON returns an error - a common first-implementation trap the docs call out explicitly.",
+    "App Verification and Privileged Intent review were a single process until June 10, 2026; they are now separate, and the intent threshold moved from 100 servers to 10,000 unique users with annual re-application. Tutorials written before that date describe a stale process.",
+    "Under the old process an app was blocked from joining new servers while awaiting review; under the June 2026 rules it keeps functioning and growing during review.",
+    "Discord does not display your app's user count in the Developer Portal - you learn you crossed 10,000 users from an email and/or system DM plus a portal alert.",
+    "Some OAuth2 scopes (voice, rpc, dm_channels.read and others) are only available to approved partners; requesting them without approval 'may cause errors or undocumented behavior' rather than a clean rejection.",
+    "Each authorization redirect includes an iss parameter set to https://discord.com (RFC 9207); verifying it before code exchange prevents authorization-server mix-up attacks in multi-provider apps.",
+    "The 100-server verification threshold comes from a help article last updated in August 2024, before the verification/intents split; newer Discord sources confirm the processes are separate but do not restate the growth threshold."
+  ],
+  "common_blockers": [
+    {
+      "problem": "The code exchange fails even though the authorization code looks valid.",
+      "solution": "The token endpoint rejects JSON bodies - send application/x-www-form-urlencoded. Also confirm the redirect_uri in the exchange exactly matches a URI registered on the app."
+    },
+    {
+      "problem": "The bot connects with a DisallowedIntents error after settings changed.",
+      "solution": "The intent must be enabled in both the Developer Portal (Bot tab) and your code's gateway connection, and for 10,000+ user apps it must have been granted through review. Check the portal toggle and, if locked, apply for access."
+    },
+    {
+      "problem": "Prefix commands (like !help) stopped working; the bot receives events but message content is empty.",
+      "solution": "The Message Content privileged intent is off or was removed after a missed application window. Migrate to slash commands, which need no privileged intent, or apply for access in the Developer Portal."
+    },
+    {
+      "problem": "The app does not appear in the App Directory after enabling Discovery.",
+      "solution": "Discord documents up to 24 hours for a verified, opted-in app to appear; confirm App Verification is complete and the Discovery criteria, metadata and images are saved."
+    }
+  ],
+  "uncertainties": [
+    "Whether the 100-server App Verification requirement still applies unchanged after June 2026: the help article stating it was last updated August 2024, while newer sources only say verification and intent review are now separate processes.",
+    "How long App Verification takes once the checklist is complete is undocumented - the help article describes requirements and a Verify App button but no review duration.",
+    "How long Privileged Intent review takes is undocumented; only the 90-day application window and the annual re-application cycle are documented.",
+    "Whether verification is required for OAuth2-only apps with no guild installs (pure 'Log in with Discord') - the documented requirement is framed around scaling past 100 servers.",
+    "The full App Verification checklist is visible only to signed-in app owners; the public help article names only team-owner identity verification through Stripe."
+  ],
+  "agent_can_do": [
+    "Implement the full OAuth2 flow: authorize URL with state and iss validation, form-encoded code exchange, refresh and revocation",
+    "Configure installation contexts and construct the Discord-provided install link",
+    "Wire gateway intent flags in code to match Developer Portal settings and avoid DisallowedIntents errors",
+    "Draft per-intent use-case justifications and App Directory metadata against the documented review criteria"
+  ],
+  "human_must_do": [
+    "Own the Discord account, the app and its team in the Developer Portal",
+    "Complete team-owner identity verification through Stripe when App Verification is needed, including any periodic re-verification",
+    "Decide which privileged intents the app genuinely needs and submit and renew those applications",
+    "Protect the bot token and client secret; the token is shown only once at reset",
+    "Approve App Directory listing content and opt into Discovery"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating a Discord app is self-serve in the Developer Portal (name, then Create), landing on a General Information page with the Application ID and Public Key; new apps have a bot user enabled by default, and the bot token is shown only once when reset.",
+      "source": "https://discord.com/developers/docs/quick-start/getting-started",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The OAuth2 token and token-revocation endpoints accept only application/x-www-form-urlencoded; JSON content is not permitted and returns an error.",
+      "source": "https://discord.com/developers/docs/topics/oauth2",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Every authorization response redirect includes an iss parameter set to https://discord.com (RFC 9207), and Discord recommends (but does not require) the state parameter for CSRF protection.",
+      "source": "https://discord.com/developers/docs/topics/oauth2",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Some OAuth2 scopes are only available to approved partners, and requesting them without approval may cause errors or undocumented behavior in the OAuth2 flow.",
+      "source": "https://discord.com/developers/docs/topics/oauth2",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Verification is required for an app to scale past 100 servers; the Developer Portal's App Verification tab lists requirements with a Verify App button, and the owning team's owner must verify their identity through Stripe, possibly re-verifying periodically.",
+      "source": "https://support-dev.discord.com/hc/en-us/articles/23926564536471-How-Do-I-Get-My-App-Verified",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "As of June 10, 2026, Privileged Intent access requires review once an app reaches 10,000 unique users (counted across all servers it is in), with a 90-day application window after notification, annual re-application for continued access, and no block on joining new servers while under review.",
+      "source": "https://docs.discord.com/developers/gateway/getting-started-with-privileged-intent-review",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "App Verification and Privileged Intent review were previously part of the same review process and are now separate; the user-count threshold replaces the previous 100-server threshold for intent review.",
+      "source": "https://support-dev.discord.com/hc/en-us/articles/40281523410967-Changes-to-Privileged-Intent-Access-for-Discord-Apps",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Enabling Discovery (App Directory and App Launcher listing) requires completed App Verification, and a verified app may take up to 24 hours to appear after opting in.",
+      "source": "https://docs.discord.com/developers/discovery/enabling-discovery",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Developer Portal URL serves the portal application shell (page title 'My Applications | Discord Developer Portal') to an unauthenticated client; managing apps requires signing in with a Discord account.",
+      "source": "https://discord.com/developers/applications",
+      "status": "reachability"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-18"
+}
