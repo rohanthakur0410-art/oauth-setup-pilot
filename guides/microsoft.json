@@ -1,0 +1,144 @@
+{
+  "slug": "microsoft",
+  "app_name": "Microsoft Entra",
+  "website": "https://www.microsoft.com",
+  "developer_console": "https://entra.microsoft.com",
+  "difficulty": "easy",
+  "difficulty_reason": "Registering an app in the Microsoft Entra admin center is one short form (name, supported account types, optional redirect URI); the real work is the permission model, consent flow and credential hygiene, not the console form.",
+  "setup_time": "unknown - Microsoft documents no registration timeline; the app registration itself is self-serve in the admin center, while publisher verification is documented as completing 'in minutes' only once all its prerequisites are met",
+  "approval": {
+    "required": false,
+    "kind": "App registration is self-serve with no Microsoft review. Friction arrives through consent policy and publisher trust, not a review queue: since November 2020, users in tenants with risk-based step-up consent see an 'unverified publisher' warning and cannot consent to most newly registered multitenant apps that lack publisher verification, and application permissions plus many high-privilege delegated permissions always need a tenant administrator's consent.",
+    "wait": "Publisher verification is documented as completing 'in minutes' once every prerequisite is met (verified Microsoft AI Cloud Partner Program global account, work/school-registered app, matching publisher domain, roles in both Entra ID and Partner Center, MFA). The timeline for the prerequisite partner-account verification is undocumented.",
+    "notes": "Publisher verification is not an app review: the blue verified badge attests the publishing organization's identity, and Microsoft states it does not imply quality, certification or compliance. It requires a verified Microsoft AI Cloud Partner Program (formerly MPN) partner global account, the app registered with a work or school account, a publisher domain that matches the verification email domain or a DNS-verified custom domain in the tenant (it cannot be *.onmicrosoft.com), Application/Cloud Application Administrator plus Partner Center roles for the person initiating, and Microsoft Entra multifactor authentication. It is free and not supported in national clouds. The Entra application gallery and AppSource are separate programs with their own processes.",
+    "requirement": "conditional",
+    "wait_basis": "unknown",
+    "wait_short": "registration self-serve; publisher verification 'in minutes' once prerequisites met, prerequisite timeline undocumented"
+  },
+  "summary": "Registering an OAuth app with Microsoft is self-serve: create it in the Entra admin center, pick who can sign in (single tenant, any Entra tenant, or personal accounts too), register redirect URIs and add credentials. There is no app review for basic OAuth2/OIDC. The gates are consent and trust instead: application and high-privilege delegated permissions need a tenant admin's consent, and unverified-publisher multitenant apps registered after November 8, 2020 hit a warning that blocks most user consent under risk-based step-up consent - so for a SaaS product, publisher verification (partner account + domain + MFA, documented as 'in minutes' once prerequisites are met) is effectively required.",
+  "steps": [
+    {
+      "title": "Register the app in the Entra admin center",
+      "detail": "At entra.microsoft.com, sign in as at least an Application Developer and create a registration: a name, supported account types (single tenant recommended for most; any Entra tenant for SaaS; options adding or limiting to personal Microsoft accounts), and an optional redirect URI. The trust relationship is unidirectional and the app object cannot be moved between tenants later, so choose the tenant deliberately.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app"
+    },
+    {
+      "title": "Record the client ID and register every redirect URI",
+      "detail": "The authorize request goes to login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize and the redirect_uri must exactly match one registered in the admin center (URL-encoded in the request). Register one per platform configuration rather than reusing a catch-all.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow"
+    },
+    {
+      "title": "Add credentials sized to the environment",
+      "detail": "Client secrets work for development but are limited to 24 months maximum (Microsoft recommends under 12) and their value is shown only once. Microsoft recommends certificates for production, and federated identity credentials let workloads such as GitHub Actions or Kubernetes authenticate with no stored secret at all.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials"
+    },
+    {
+      "title": "Request the minimum permissions and plan the consent path",
+      "detail": "Delegated permissions (scopes) act as the signed-in user; application permissions act as the app itself. Application permissions and many high-privilege delegated permissions can only be consented by an administrator, and admin-restricted scopes return an 'not authorized to consent' error for ordinary org users - they must be granted by a Global Administrator. Design scopes so first-run sign-in does not immediately require an admin.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview"
+    },
+    {
+      "title": "For a multitenant app, complete publisher verification",
+      "detail": "Verify the organization's Microsoft AI Cloud Partner Program global account, register the app with a work or school account, set a matching publisher domain (not *.onmicrosoft.com), and have an initiator with the required Entra ID and Partner Center roles using MFA. Microsoft documents verification 'in minutes' once prerequisites are met and no charge; the badge removes the unverified-publisher warning that otherwise blocks most user consent under risk-based step-up consent.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview"
+    },
+    {
+      "title": "Treat gallery and store listings as separate programs",
+      "detail": "The Microsoft Entra application gallery and AppSource are documented as separate programs from publisher verification, with their own processes; do not treat the verified badge as listing approval.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview"
+    }
+  ],
+  "requirements": [
+    "A Microsoft Entra tenant and an account with at least the Application Developer role",
+    "Supported account types chosen up front; the app object cannot move tenants afterwards",
+    "Every redirect URI pre-registered per platform configuration; authorize requests must match one exactly",
+    "A client secret (24-month maximum, value shown once), certificate, or federated credential for confidential clients",
+    "A tenant administrator to consent to application or high-privilege delegated permissions",
+    "For multitenant distribution: a verified Partner Program global account, work/school app registration, matching publisher domain, dual admin roles and MFA for publisher verification"
+  ],
+  "nuances": [
+    "Client secrets cannot exceed 24 months and the value is never shown again after you leave the page - expiry is a classic production outage, and Microsoft recommends certificates or federated credentials for production instead.",
+    "Publisher verification is not an app review: Microsoft states the badge says nothing about quality, certification or compliance. Microsoft 365 App Certification and the app gallery are separate programs.",
+    "Since November 2020, risk-based step-up consent warns users about most newly registered multitenant apps from unverified publishers and blocks consent for beyond-basic scopes where the tenant policy is enabled - publisher verification is the fix, and it is free.",
+    "Publisher verification is documented as completing 'in minutes', but only once all prerequisites are already met; the timeline for verifying the underlying partner account is undocumented.",
+    "Apps registered with personal Microsoft accounts cannot be publisher verified, and verification is not supported in national clouds at all.",
+    "Admin-restricted scopes produce an authorization error for ordinary org users at consent time - they cannot be consented incrementally by users and must go through a Global Administrator.",
+    "The publisher domain cannot be *.onmicrosoft.com for publisher verification; you need a matching email domain or a DNS-verified custom domain in the tenant."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Users see an 'unverified publisher' warning, or cannot consent to the app at all.",
+      "solution": "For multitenant apps registered after November 8, 2020, risk-based step-up consent warns or blocks unverified publishers for beyond-basic scopes. Complete publisher verification, and check the tenant's user-consent policy with its admin."
+    },
+    {
+      "problem": "Token requests fail with invalid_client after months of working.",
+      "solution": "The client secret expired (24-month maximum). Rotate it in Certificates & secrets and consider moving to a certificate or federated credential so expiry stops being an outage vector."
+    },
+    {
+      "problem": "Users get 'not authorized to consent' for a requested scope.",
+      "solution": "The scope is admin-restricted, or it is an application/high-privilege delegated permission. Have a tenant administrator (Global Administrator for admin-restricted scopes) grant consent, or drop the scope."
+    },
+    {
+      "problem": "Sign-in fails saying the app is not registered or not in the tenant.",
+      "solution": "The app object cannot move between tenants and single-tenant registrations reject other tenants. Check the tenant in the authority URL and the supported account types setting on the registration."
+    }
+  ],
+  "uncertainties": [
+    "How long the prerequisite Microsoft AI Cloud Partner Program account verification takes is undocumented; the 'in minutes' figure covers only the final publisher-verification step.",
+    "Whether a given customer tenant's consent policy (risk-based step-up consent, admin consent workflows, disabled user consent) blocks users varies per organization and cannot be determined before testing with that tenant.",
+    "The exact criteria and timelines for the Entra application gallery and AppSource listing processes are separate programs not covered by the cited pages.",
+    "Whether Microsoft's 'verified in minutes' holds when prerequisites were only freshly completed is not documented."
+  ],
+  "agent_can_do": [
+    "Implement the full v2.0 authorization-code flow: authorize redirect, exact-match redirect_uri, token exchange and refresh",
+    "Choose delegated versus application permissions per API call and map which ones trigger admin consent",
+    "Set up federated identity credentials for GitHub Actions or Kubernetes so no secret is stored",
+    "Draft the publisher-verification checklist against the documented prerequisites"
+  ],
+  "human_must_do": [
+    "Own the Microsoft Entra tenant and the account registering the app",
+    "Choose single-tenant versus multitenant versus personal-account support; it cannot be migrated later",
+    "Complete or obtain the Partner Program account verification and initiate publisher verification with the required roles and MFA",
+    "Store the client secret value when shown and plan rotation before its expiry",
+    "Obtain admin consent from each customer tenant for application or high-privilege permissions"
+  ],
+  "evidence": [
+    {
+      "claim": "App registration is self-serve in the Microsoft Entra admin center (sign in as at least Application Developer, pick supported account types, register); the trust relationship is unidirectional and the app object cannot be moved between tenants.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The authorize endpoint is login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize and the redirect_uri must exactly match a redirect URI registered in the admin center; admin-restricted scopes produce an error for ordinary org users and must be granted by a Global Administrator.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Client secret lifetime is limited to 24 months or less (Microsoft recommends under 12), the secret value is never displayed again after leaving the page, certificates are recommended for production, and federated identity credentials avoid stored secrets for workloads like GitHub Actions.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Application permissions and many high-privilege delegated permissions can only be consented by an administrator; delegated permissions act on behalf of the signed-in user while application permissions act as the app itself.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Publisher verification adds a blue verified badge to the consent prompt, requires a verified Microsoft AI Cloud Partner Program partner global account, a work/school-registered app, a matching publisher domain (not *.onmicrosoft.com), roles in both Entra ID and Partner Center plus MFA, is free, and is documented as completing 'in minutes' once prerequisites are met.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Beginning November 2020, users cannot consent to most newly registered multitenant apps that are not publisher verified when risk-based step-up consent applies; a warning marks the app as from an unverified publisher. Publisher verification is not supported in national clouds and does not imply quality or compliance; the app gallery is a separate program.",
+      "source": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Entra admin center serves its application shell (HTTP 200) to an unauthenticated client; managing registrations requires signing in with a tenant account.",
+      "source": "https://entra.microsoft.com",
+      "status": "reachability"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-19"
+}
