@@ -1,0 +1,152 @@
+{
+  "slug": "salesforce",
+  "app_name": "Salesforce",
+  "website": "https://www.salesforce.com",
+  "developer_console": "https://developer.salesforce.com/signup",
+  "difficulty": "medium",
+  "difficulty_reason": "Several configuration surfaces rather than one short form: OAuth settings (callback URL, scopes, enabled flows) on the app's Settings tab, authorization policy (Permitted Users, profiles and permission sets, refresh-token validity) on the Policies tab, and an email-verified step to reveal the consumer key and secret. No single step is technically hard.",
+  "setup_time": "unknown - Salesforce documents no registration timeline; a basic external client app is created and enabled as soon as the Setup form is submitted, while public distribution adds a security review with documented estimates (1-2 weeks submission verification plus 3-4 weeks initial testing)",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve inside any Salesforce org with Setup access, with no Salesforce review. Two approval layers sit around it instead: inside each customer org, the app's Permitted Users policy can restrict authorization to admin pre-approved profiles and permission sets, and public distribution on AgentExchange (the renamed AppExchange) requires partner onboarding plus a passed security review.",
+    "wait": "Salesforce documents security-review turnaround estimates: 1-2 weeks for submission verification plus 3-4 weeks for a first Product Security test (2-3 weeks for a resubmission), with the initial review documented as complete approximately 4-6 weeks after submission. The docs state these are estimates affected by submission completeness and queue volume.",
+    "notes": "The security review gates distribution on AgentExchange, not the OAuth integration itself: creating the external client app and running OAuth flows needs no review. Solutions distributed free of charge pay no review fee; for paid solutions, Salesforce's developer blog states the fee moved to $999 per attempt as of March 16, 2023 (eliminating the prior $2,550 initial fee and $150 annual fee), while the current docs pages say only 'applicable fees' without an amount. Reviews are not one-time: periodic re-reviews apply, and a review expires for a missed re-review, overdue review fees, or unpaid revenue sharing, which removes a linked public listing until it is relisted. Partner onboarding (Partner Community application, due-diligence questionnaire, commercial agreement) precedes the first review and has no documented timeline.",
+    "wait_basis": "documented",
+    "wait_short": "creation self-serve; AgentExchange security review ~4-6 weeks initial by documented estimates; partner onboarding timeline undocumented"
+  },
+  "summary": "Registering an OAuth app with Salesforce means creating an external client app inside a Salesforce org's Setup (a free Developer Edition org works): callback URL, OAuth scopes, enabled flows, then authorization policies and an email-verified credential reveal. There is no review to create the app. The gates are elsewhere: since Spring '26 creating the older connected-app type is restricted, each customer org's admin policy can pre-approve who may authorize the app, and public distribution on AgentExchange (formerly AppExchange) requires partner onboarding and a security review with documented 4-6-week initial estimates and a per-attempt fee for paid solutions.",
+  "steps": [
+    {
+      "title": "Get a Salesforce org",
+      "detail": "Registration happens inside an org's Setup, not in a public developer console. Sign up for a free Developer Edition org at developer.salesforce.com/signup if you do not already have one.",
+      "source": "https://developer.salesforce.com/signup"
+    },
+    {
+      "title": "Create the external client app in Setup",
+      "detail": "In Setup, open the External Client App Manager and create the app. Under App Settings enter the OAuth callback URL and select the scopes the integration needs (for example api, web, refresh_token/offline_access) and enable the flows you use, such as the Authorization Code and Credentials flow. The basic external client app is created and enabled immediately.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm"
+    },
+    {
+      "title": "Skip the older connected-app path",
+      "detail": "Creating connected apps is restricted as of Spring '26: existing connected apps keep working, but new ones require contacting Salesforce Support, and Salesforce recommends external client apps instead.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_oauth_and_connected_apps.htm"
+    },
+    {
+      "title": "Set authorization policies",
+      "detail": "On the app's Policies tab, choose Permitted Users: 'Admin approved users are pre-authorized' restricts authorization to the profiles and permission sets an admin selects on the app, which is how locked-down orgs gate who can connect. Also set a refresh-token validity period (the docs' example uses 90 days as a security best practice) and a session timeout.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm"
+    },
+    {
+      "title": "Retrieve the consumer key and secret",
+      "detail": "Open OAuth Settings and click Consumer Key and Secret; Salesforce emails a verification code before revealing the values. The consumer secret is only sent in requests if the app settings require it for the flow (single-page apps are told to deselect the secret requirements).",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm"
+    },
+    {
+      "title": "For public distribution, plan for partner onboarding and the security review",
+      "detail": "Listing on AgentExchange (formerly AppExchange) starts with Partner Community onboarding (application, due-diligence questionnaire, commercial agreement), then a security review submitted from the AgentExchange Partner Console with all required materials and applicable fees. Documented estimates put an initial review at roughly 4-6 weeks.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.packagingGuide.meta/packagingGuide/security_review_how_it_works.htm"
+    }
+  ],
+  "requirements": [
+    "A Salesforce org you can administer (a free Developer Edition org is sufficient)",
+    "The OAuth callback URL(s) for your app and the scopes it needs",
+    "For locked-down customer orgs: an admin who pre-authorizes the profiles or permission sets allowed to authorize the app",
+    "For AgentExchange distribution: Salesforce partner status via Partner Community onboarding, review materials, and the per-attempt review fee for paid solutions"
+  ],
+  "nuances": [
+    "Since Spring '26, creating connected apps (the older OAuth app type) is restricted and requires contacting Salesforce Support; existing connected apps keep working and external client apps are the recommended path.",
+    "AppExchange is now AgentExchange: appexchange.salesforce.com presents 'Salesforce AppExchange is now AgentExchange', a unified marketplace that also absorbed the Slack Marketplace.",
+    "Review turnaround figures are documented estimates, not commitments: 1-2 weeks submission verification, 3-4 weeks first test, 2-3 weeks resubmission, approximately 4-6 weeks for an initial review overall.",
+    "Free-of-charge solutions pay no review fee; for paid solutions the fee is $999 per attempt as of March 16, 2023 per Salesforce's developer blog, and the current docs name no amount.",
+    "A passed review is not permanent: periodic re-reviews apply, and a review expires for a missed re-review, overdue review fees, or unpaid revenue sharing, which removes a linked public listing until relisted.",
+    "A new package version whose direct ancestor passed review inherits listing readiness, so it can be listed without a fresh review.",
+    "The 90-day refresh-token validity and 15-minute session timeout in the docs' walkthrough are stated as security best practices for that example, not platform limits."
+  ],
+  "common_blockers": [
+    {
+      "problem": "You cannot find the Salesforce developer console to register an OAuth app.",
+      "solution": "There is no standalone public console: registration lives inside an org's Setup under External Client App Manager. Sign up for a free Developer Edition org first."
+    },
+    {
+      "problem": "The connected-app creation path you found in an older tutorial is unavailable.",
+      "solution": "Creating connected apps is restricted as of Spring '26. Create an external client app instead, or contact Salesforce Support if you specifically need a connected app."
+    },
+    {
+      "problem": "Users in a customer org cannot authorize the app.",
+      "solution": "The org admin controls authorization through the app's Permitted Users policy; with 'Admin approved users are pre-authorized', only the profiles and permission sets the admin pre-approves can connect. Ask the admin to pre-authorize the needed profiles."
+    },
+    {
+      "problem": "The AgentExchange listing is delayed or removed after passing review.",
+      "solution": "Initial reviews are documented at roughly 4-6 weeks and timelines are estimates. After listing, a review expires for a missed re-review, overdue review fees, or unpaid revenue sharing, which removes the listing until resolved and relisted."
+    }
+  ],
+  "uncertainties": [
+    "Whether the per-attempt review fee is still $999: that figure is from Salesforce's developer blog dated March 16, 2023, and the current docs pages state only 'applicable fees' without an amount.",
+    "How long Partner Community onboarding (application, due diligence, legal sign-off) takes is undocumented.",
+    "Whether distributing an OAuth integration outside AgentExchange (for example sharing credentials with customer orgs directly) triggers any Salesforce review is not established by the fetched docs, which describe the review as gating AgentExchange distribution.",
+    "Which org editions expose every external client app setting; the headless-identity walkthrough lists Enterprise, Unlimited and Developer Editions for its flow."
+  ],
+  "agent_can_do": [
+    "Implement the OAuth 2.0 flows the external client app enables, including the web-server (authorization code) flow and refresh handling",
+    "Draft the scope list and callback URLs from the integration's actual API needs",
+    "Prepare the security-review materials checklist against the documented submission stages",
+    "Track the documented review turnaround estimates and flag resubmission timelines"
+  ],
+  "human_must_do": [
+    "Own the Salesforce org and click through Setup; org consoles are login-gated",
+    "Complete the email identity verification to reveal the consumer key and secret, and store them",
+    "Choose the Permitted Users policy and which profiles or permission sets are pre-authorized",
+    "Complete Partner Community onboarding, pay any applicable review fee, and own the security-review submission",
+    "Keep re-review, fee and revenue-sharing obligations current so the review does not expire"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating an external client app in an org's Setup is self-serve: after entering the callback URL and OAuth scopes and clicking Create, the basic app is created and enabled immediately.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Creating connected apps is restricted as of Spring '26; existing connected apps keep working, external client apps are recommended, and creating new connected apps requires contacting Salesforce Support.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_oauth_and_connected_apps.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app's Policies tab offers 'Admin approved users are pre-authorized', under which an admin pre-authorizes the profiles and permission sets that may use the app; refresh-token validity (90 days in the docs' example) and session timeout are configured there.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Revealing the consumer key and secret requires an email identity verification step; whether a consumer secret is required for a flow is an app setting.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_auth_eca.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Salesforce offers a free Developer Edition org signup, which is where OAuth app registration starts since there is no standalone public console.",
+      "source": "https://developer.salesforce.com/signup",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "AppExchange is now AgentExchange, a unified marketplace; every listed solution goes through Salesforce's security review, and partner onboarding runs through the Partner Community with a due-diligence questionnaire and commercial agreement before listing.",
+      "source": "https://appexchange.salesforce.com/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "To distribute managed packages on AgentExchange they must pass the security review; documented turnaround estimates are 1-2 weeks for submission verification, 3-4 weeks for a first Product Security test and 2-3 weeks for a resubmission, stated as estimates, and free-of-charge solutions pay no review fee.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.packagingGuide.meta/packagingGuide/security_review_how_it_works.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "An initial security review is documented as complete approximately 4-6 weeks after submission; a review expires for a missed re-review, overdue review fees, or unpaid revenue sharing, which removes a linked public listing until relisted.",
+      "source": "https://developer.salesforce.com/docs/atlas.en-us.packagingGuide.meta/packagingGuide/security_review_manage.htm",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "As of March 16, 2023, the security review fee moved to a per-attempt model: the $2,550 initial fee and $150 annual fee were eliminated and the fee is $999 per attempt for paid apps.",
+      "source": "https://developer.salesforce.com/blogs/2023/04/prepare-your-app-to-pass-the-appexchange-security-review",
+      "status": "docs-supported"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-20"
+}
