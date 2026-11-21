@@ -1,0 +1,156 @@
+{
+  "slug": "atlassian",
+  "app_name": "Atlassian",
+  "website": "https://www.atlassian.com",
+  "developer_console": "https://developer.atlassian.com/console/myapps",
+  "difficulty": "medium",
+  "difficulty_reason": "A few console surfaces rather than one short form: create the OAuth 2.0 integration, configure the callback URL under Authorization, add API scopes under Permissions, copy the client ID and secret from Settings, and flip the Distribution toggle to share it. No single step is technically hard.",
+  "setup_time": "unknown - Atlassian documents no registration timeline; the app is created in the developer console in one flow, while Marketplace approval for a public listing is documented at 10-15 business days",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the Atlassian developer console with no review, and sharing is a toggle: the app is private by default, and enabling sharing lets anyone with the authorization link install it. Users installing an unapproved integration are warned that it has not been reviewed by Atlassian. Removing that warning and appearing on the Atlassian Marketplace (an informational listing for 3LO apps) require Atlassian's app approval.",
+    "wait": "Marketplace approvals are documented at 10-15 business days, varying with submission volume and Marketplace team availability; submissions are reviewed in chronological order, multiple rounds are common, and Silver, Gold and Platinum partners receive expedited SLAs.",
+    "notes": "Approval attaches to the public listing: routine version updates of an approved app do not need re-approval except payment-model changes or new app types (App Editions, Atlassian Government Cloud, Isolated Cloud, multi-app compatibility). Since the 2025 marketplace security update, onboarding apps and new app versions go through app security questionnaires, vulnerability scanning and mandatory Privacy & Security tab answers for cloud apps, and incomplete prerequisites (privacy and security tab approval, partner verification ticket, unresolved vulnerability tickets) can delay review. OAuth 2.0 (3LO) apps appear as informational listings with limited Marketplace features, and an informative listing is not required to submit an integration for approval.",
+    "wait_basis": "documented",
+    "wait_short": "creation and link-sharing self-serve; Marketplace listing approval 10-15 business days documented"
+  },
+  "summary": "Registering an OAuth app with Atlassian is self-serve: create an OAuth 2.0 (3LO) integration in the developer console, set the callback URL, add the API scopes your integration needs (across Jira, Confluence and other products if required), and copy the client ID and secret. The app is private until you enable sharing, after which anyone with the authorization link can install it with a warning that it is unapproved. The gate is public distribution: a Marketplace listing requires Atlassian's approval, documented at 10-15 business days with security questionnaires and vulnerability scanning added in 2025.",
+  "steps": [
+    {
+      "title": "Create the OAuth 2.0 integration in the developer console",
+      "detail": "From any page on developer.atlassian.com, open your profile menu, select Developer console, then Create and OAuth 2.0 integration. This is the app type for integrations acting on a user's behalf across Jira, Confluence and other Atlassian products.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/"
+    },
+    {
+      "title": "Configure the callback URL",
+      "detail": "In the app's Authorization section, select Configure under OAuth 2.0 (3LO) and enter the Callback URL. When you implement the flow, redirect_uri must match this URL.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/"
+    },
+    {
+      "title": "Add the API scopes your integration needs",
+      "detail": "Only scopes added to the app in the developer console can be requested at authorization time, and you may mix scopes from multiple products. Find each operation's required scope in the OAuth scopes required field of its API docs. The consenting user's own product permissions always constrain the app regardless of scope.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/"
+    },
+    {
+      "title": "Copy the client ID and secret",
+      "detail": "The client ID and secret live in the app's Settings page in the developer console and are used in the token exchange and refresh requests.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/"
+    },
+    {
+      "title": "Enable sharing when you are ready to distribute",
+      "detail": "The app is private by default. Under Distribution, enable sharing with the toggle, then copy the authorization URL(s) and send them to your users. Installers of an unapproved integration see a warning that it has not been reviewed by Atlassian.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/"
+    },
+    {
+      "title": "For a public Marketplace listing, prepare for approval",
+      "detail": "Submit through the partner portal, complete the prerequisites (privacy and security tab approval, partner verification ticket, resolved vulnerability tickets) and expect a documented 10-15 business day approval, with security questionnaires and vulnerability scanning applied since 2025. Monitor for reviewer questions and respond promptly.",
+      "source": "https://developer.atlassian.com/platform/marketplace/app-approval-guidelines/"
+    }
+  ],
+  "requirements": [
+    "An Atlassian account; the developer console is login-gated",
+    "The callback URL your app receives the authorization code on",
+    "The list of API scopes per product your integration calls",
+    "For a Marketplace listing: a partner profile, privacy policy, security questionnaire answers and marketing assets"
+  ],
+  "nuances": [
+    "OAuth 2.0 (3LO) supports the code grant flow only; the implicit grant flow is not supported, which Atlassian lists as a known issue for standalone mobile and JavaScript-only apps.",
+    "Consent can be account-level: a single grant can cover multiple Atlassian sites, subject to the requested scopes.",
+    "Sharing by link works without any approval; the approval gate only removes the unreviewed-app warning and enables a Marketplace presence.",
+    "OAuth 2.0 (3LO) apps on the Marketplace appear as informational listings with limited Marketplace features.",
+    "An approved app stays approved across routine version updates; re-approval is only triggered by payment-model changes or new app types.",
+    "Silver, Gold and Platinum partners receive expedited review SLAs, so the documented 10-15 business day window is not uniform across submitters.",
+    "Scopes never widen a user's permissions: an app with manage:jira-project still cannot create projects for a user without the Administer Jira permission."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Installers see a warning that the app has not been reviewed by Atlassian.",
+      "solution": "Expected for any shared but unapproved OAuth 2.0 (3LO) app. Submit the integration for Marketplace approval to remove it; an informative listing is not required to submit."
+    },
+    {
+      "problem": "API calls return 403 even though the app holds the right scope.",
+      "solution": "Scopes never widen user permissions: the consenting user lacks the underlying product permission (for example Administer Jira). Fix the user's permissions, not the app."
+    },
+    {
+      "problem": "The authorization flow fails with a redirect_uri mismatch.",
+      "solution": "The redirect_uri must exactly match the Callback URL configured under Authorization in the developer console; update one side so they are identical."
+    },
+    {
+      "problem": "The Marketplace review seems stalled.",
+      "solution": "Check the documented delay sources first: privacy and security tab approval, the partner verification ticket, and any unresolved security vulnerability tickets. Reviews run 10-15 business days in chronological order and multiple rounds are common."
+    }
+  ],
+  "uncertainties": [
+    "How long the partner verification prerequisite takes; it is a ticket in the approval process with no documented timeline.",
+    "What the expedited SLAs for Silver, Gold and Platinum partners actually are; Atlassian mentions but does not quantify them.",
+    "Whether the 10-15 business day figure applies identically to integration-only approvals (no informative listing) as to full Marketplace listings.",
+    "The client secret's rotation or expiry policy is not covered in the fetched documentation."
+  ],
+  "agent_can_do": [
+    "Implement the authorization-code flow: build the authorize URL with scopes, exchange the code, and handle the refresh-token flow",
+    "Map each API call to its required scope from the Atlassian API documentation",
+    "Draft listing content and security questionnaire answers from the app's actual behavior",
+    "Track the documented 10-15 business day approval window and flag resubmission rounds"
+  ],
+  "human_must_do": [
+    "Own the Atlassian account and click through the developer console; it is login-gated",
+    "Choose the scopes and flip the Distribution sharing toggle",
+    "Complete partner verification, the security questionnaires and the privacy and security tab",
+    "Respond to reviewer questions and own any resubmissions"
+  ],
+  "evidence": [
+    {
+      "claim": "OAuth 2.0 (3LO) apps are created and managed in the Atlassian developer console: profile menu, Developer console, Create, OAuth 2.0 integration.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The callback URL is configured under Authorization for the app and redirect_uri must match it; the client ID and secret live in the app's Settings page.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Only scopes added to the app can be requested, scopes can span multiple products, per-operation required scopes are documented, and the consenting user's own permissions always constrain the app regardless of scope.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Apps are private by default; enabling the Distribution sharing toggle lets users install via the authorization link, and installers of an unapproved integration are warned it has not been reviewed by Atlassian. 3LO apps appear on the Marketplace as informational listings with limited features, and an informative listing is not required to submit an integration for approval.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "OAuth 2.0 (3LO) supports the code grant flow only; the implicit grant flow is not supported (listed known issue), and grants can apply at the Atlassian account level across multiple sites.",
+      "source": "https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "All publicly listed apps require approval, documented at 10-15 business days varying with volume and team availability, reviewed in chronological order with multiple rounds common; routine version updates of approved apps are exempt except payment-model changes or new app types, and Silver/Gold/Platinum partners receive expedited SLAs.",
+      "source": "https://developer.atlassian.com/platform/marketplace/app-approval-guidelines/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Prerequisites that can delay review: privacy and security tab and ticket approval, a partner verification ticket, and any pending security vulnerability tickets.",
+      "source": "https://developer.atlassian.com/platform/marketplace/app-approval-guidelines/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Since the 2025 marketplace security update, onboarding apps and new app versions go through app security questionnaires, vulnerability scanning and mandatory Privacy & Security tab questions for cloud apps.",
+      "source": "https://developer.atlassian.com/platform/marketplace/app-approval-security-workflow/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Submission happens through the partner portal, with notifications, reviewer questions and resubmission rounds until approval.",
+      "source": "https://developer.atlassian.com/platform/marketplace/onboarding-hub/launch/submit-for-review/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The developer console URL returns no usable content unauthenticated; it is login-gated.",
+      "source": "https://developer.atlassian.com/console/myapps",
+      "status": "reachability"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-21"
+}
