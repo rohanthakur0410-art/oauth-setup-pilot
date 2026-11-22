@@ -1,0 +1,151 @@
+{
+  "slug": "meta",
+  "app_name": "Meta",
+  "website": "https://www.meta.com",
+  "developer_console": "https://developers.facebook.com/apps/",
+  "difficulty": "medium",
+  "difficulty_reason": "Several console surfaces rather than one short form: register as a developer, create the app by picking use cases (which auto-add permissions, features and products), customize each use case in the dashboard, connect a business portfolio when accessing data you do not own, and manage the Publish / Go live controls. No single step is technically hard.",
+  "setup_time": "unknown - Meta documents no registration timeline; the app and its credentials are created in the developer console in one flow, while App Review submissions are documented as receiving a decision within a week",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the Meta developer console with no review. The gate is Meta's App Review: it is required exactly when the app will be used by anyone without a role on the app or a role in a business that has claimed the app, which is the normal case for any shipped integration. Until a permission or feature is approved, it can only be requested from, or be active for, users who have a role on the app.",
+    "wait": "The submission walkthrough documents that once you accept the Platform Onboarding Terms and submit, the submission is queued and you should receive a decision within a week.",
+    "notes": "Approval is per permission and per feature: unapproved permissions can only be requested from users with a role on the app. Prerequisites inside the submission flow: at least one successful API call using each requested permission within 30 days of submitting (the call is logged within 2 days and the request button stays greyed out until it is logged), a screen recording demonstrating each requested permission and feature (anything missing a recording will not be approved), app verification sign-in details so reviewers can access the app, and business verification plus data handling questions where prompted. Apps that will access data they do not own or manage must be connected to a business portfolio. Switching to Live mode before approvals are complete leaves unapproved permissions inactive even for users with a role on the app, and Development-mode test data becomes visible to all users on switching.",
+    "wait_basis": "documented",
+    "wait_short": "creation self-serve; App Review decision documented within a week of submission"
+  },
+  "summary": "Registering an OAuth app with Meta is self-serve: register as a developer, create an app in the developer console by selecting use cases (for example 'Authenticate and request data from users with Facebook Login'), and you immediately get an App ID and App Secret. The gate is App Review: before anyone without a role on the app can be asked for a permission, that permission must be approved. The submission requires a successful API call per permission within 30 days, a screen recording per permission, app sign-in details for reviewers, and sometimes business verification, with a decision documented within a week.",
+  "steps": [
+    {
+      "title": "Register as a developer and create the app",
+      "detail": "Creating an app requires a registered developer account. In the developer console, create the app and select one or more use cases; each use case automatically adds the permissions, features and products it needs, and incompatible use cases are greyed out. You receive the App ID and App Secret used for authentication and token generation.",
+      "source": "https://developers.facebook.com/docs/development/create-an-app"
+    },
+    {
+      "title": "Customize the use cases in the dashboard",
+      "detail": "Each use case has required permissions that cannot be removed and optional permissions you can add or remove during development; only add what the app needs. If the app will access data you do not own or manage, connect it to a business portfolio.",
+      "source": "https://developers.facebook.com/docs/development/create-an-app"
+    },
+    {
+      "title": "Develop against users who have a role on the app",
+      "detail": "Unapproved permissions can only be requested from users who have a role on the app, so development and testing happen with role users. App Review is not required while the app is only used by them.",
+      "source": "https://developers.facebook.com/docs/app-review"
+    },
+    {
+      "title": "Make a successful API call with each permission",
+      "detail": "Within 30 days of submitting, make at least one successful API call using each permission you want approved; the call is logged within 2 days and the Request advanced access button stays greyed out until a successful call is logged.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide"
+    },
+    {
+      "title": "Prepare the submission materials",
+      "detail": "Record a screen recording that shows a user granting each requested permission and how the app uses each granted permission and feature; any requested item missing a recording will not be approved. Provide app verification sign-in details so reviewers can access the app, and complete business verification and data handling questions where prompted.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide"
+    },
+    {
+      "title": "Submit, then go live after approval",
+      "detail": "Submit for review and accept the Platform Onboarding Terms; a decision is documented within a week. Only after the required permissions and features are approved, and business verification is completed where required, switch the app to Live mode from Publish > Go live; switching early leaves unapproved permissions inactive even for role users and exposes Development-mode test data.",
+      "source": "https://developers.facebook.com/docs/development/release"
+    }
+  ],
+  "requirements": [
+    "A registered Meta developer account; the app dashboard is login-gated",
+    "The use cases that match your integration, which determine the permissions and features",
+    "A working build reviewers can sign into, plus screen recordings of each permission in use",
+    "A business portfolio connection when accessing data you do not own or manage, and business verification where prompted"
+  ],
+  "nuances": [
+    "App Review is per permission and per feature, not per app: an app can be usable for some scopes while others remain gated.",
+    "The review gate keys off who uses the app, not where it is listed: there is no app store listing review, but any user without a role on the app triggers the App Review requirement.",
+    "A successful API call with each permission must be logged before the request button ungreys, so the app must already work end to end in Development mode before you can even submit.",
+    "Switching to Live mode too early is worse than waiting: unapproved permissions become inactive for everyone, including users with a role on the app, and Development-mode test data becomes visible to all users.",
+    "Use cases bundle permissions: required permissions for a use case cannot be removed, and only compatible use cases can be combined in one app.",
+    "Reviewers test by following the screen recordings, and recordings should be in English UI and 1080p or better per the submission guidelines."
+  ],
+  "common_blockers": [
+    {
+      "problem": "The Request advanced access button is greyed out.",
+      "solution": "Make at least one successful API call with that permission; the call data is logged within 2 days and the button stays greyed out until a call is logged. The call must be within 30 days of submitting."
+    },
+    {
+      "problem": "A permission was rejected or ignored in the review.",
+      "solution": "Any requested permission or feature missing a screen recording will not be approved; the recording must show a user granting it and the app using it. Re-record and resubmit."
+    },
+    {
+      "problem": "The app works in development but regular users cannot grant permissions.",
+      "solution": "Unapproved permissions can only be requested from users with a role on the app. Complete App Review for those permissions before switching to Live mode and onboarding real users."
+    },
+    {
+      "problem": "After switching to Live mode, features stopped working for the developers themselves.",
+      "solution": "Live mode restricts even role users to approved permissions and features. Switch only after every needed permission and feature is approved; this restriction applies to everyone."
+    }
+  ],
+  "uncertainties": [
+    "How long business verification takes when prompted; the fetched docs describe the step but no timeline for it.",
+    "Whether the documented 'decision within a week' holds under heavy submission volume; it is the only timeframe Meta states in the fetched docs.",
+    "Whether data handling questions add review time; they are evaluated immediately per the docs, but their effect on the overall decision window is not stated.",
+    "The access levels documentation page (standard vs advanced access details) could not be fetched unauthenticated, so access-level specifics beyond the submission walkthrough are unverified."
+  ],
+  "agent_can_do": [
+    "Implement the Facebook Login OAuth flow against the app's use cases and permissions",
+    "Map each API call the integration needs to the permission that must be requested",
+    "Draft the submission inventory: permissions, their purposes, and what each screen recording must show",
+    "Track the 30-day successful-call window per permission and the documented one-week decision window"
+  ],
+  "human_must_do": [
+    "Own the developer account and click through the console; the app dashboard is login-gated",
+    "Choose the use cases and any optional permissions",
+    "Record the screen recordings and provide reviewer sign-in access to the app",
+    "Complete business verification and the data handling questions where prompted",
+    "Decide when to switch the app to Live mode"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating a Meta app is self-serve after registering as a developer: select use cases in the console and receive an App ID and App Secret; use cases auto-add the permissions, features and products they need, and incompatible use cases are greyed out.",
+      "source": "https://developers.facebook.com/docs/development/create-an-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Each use case has required permissions that cannot be removed plus optional permissions that can be added or removed during development; apps accessing data they do not own or manage must be connected to a business portfolio.",
+      "source": "https://developers.facebook.com/docs/development/create-an-app",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "App Review is required if the app will be used by anyone without a role on the app or a role in a business that has claimed it; unapproved permissions can only be requested from users with a role on the app, and unapproved features are only active for them.",
+      "source": "https://developers.facebook.com/docs/app-review",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "App Review submissions are documented as queued with a decision within a week after accepting the Platform Onboarding Terms.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Each permission requested requires at least one successful API call within 30 days of submitting, logged within 2 days; the Request advanced access button stays greyed out until a successful call is logged.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Screen recordings must demonstrate a user granting each requested permission and how the app uses it; any requested permission or feature missing a screen recording will not be approved, and reviewers should be given app verification sign-in access.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Business verification may be prompted during submission depending on the business status, and approved businesses may be asked data handling questions evaluated immediately.",
+      "source": "https://developers.facebook.com/docs/app-review/submission-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Publishing means making the app available to accounts without a role on it (Publish > Go live to Live mode); Live mode should only happen after all required permissions and features are approved and business verification is complete, because Live mode restricts even role users to approved permissions and exposes Development-mode test data.",
+      "source": "https://developers.facebook.com/docs/development/release",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app dashboard URL returns a Page Not Found response unauthenticated; the console is login-gated.",
+      "source": "https://developers.facebook.com/apps/",
+      "status": "reachability"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-22"
+}
