@@ -1,0 +1,150 @@
+{
+  "slug": "zoom",
+  "app_name": "Zoom",
+  "website": "https://www.zoom.us",
+  "developer_console": "https://marketplace.zoom.us/",
+  "difficulty": "medium",
+  "difficulty_reason": "Several console surfaces rather than one short form: the Marketplace build flow spans basic info (name, admin-managed versus user-managed), auto-generated development and production credentials, OAuth information (redirect URL plus a required allow list), features, scopes, and a local test step. No single step is technically hard.",
+  "setup_time": "unknown - Zoom documents no registration timeline; the app and its credentials are created in the build flow in one session, while the review team is documented as responding to submissions within 5 business days",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the Zoom App Marketplace build flow with no review for private, beta, or account-internal apps. The gate is publishing: public and unlisted apps undergo a dedicated review with a Marketplace Operations phase (metadata, usability, compliance) followed by a Marketplace Security phase (security audit and focused testing on Zoom scopes).",
+    "wait": "Zoom's developer blog documents that apps are reviewed Monday to Friday on a first come first serve basis, with a submission response time within 5 business days; total approval time depends on remediation rounds.",
+    "notes": "Scope requests are themselves security reviewed: adding a scope submits a request to the Zoom Security Review team under a minimal-access principle, and scopes judged unnecessary for the app may be rejected. Development and production credentials are distinct, and production credentials are for when the app is ready to publish. Beta apps cannot be published and can only be shared with members of the developer's own Zoom account. Published apps carry ongoing obligations: Terms of Use, Privacy Policy, self-serve documentation and a Support URL under the Marketplace Developer Agreement.",
+    "wait_basis": "documented",
+    "wait_short": "private/beta/internal apps need no review; public/unlisted review response documented within 5 business days"
+  },
+  "summary": "Registering an OAuth app with Zoom is self-serve: sign into the Zoom App Marketplace with a developer-permission account, build a General app, set the OAuth redirect URL and allow list, and add scopes. Private, beta and account-internal apps need no review at all. The gate is publishing: public and unlisted apps go through a two-phase review (operations, then security) with a documented response within 5 business days, and every scope you add is itself a request the security team can reject under a minimal-access principle.",
+  "steps": [
+    {
+      "title": "Create a General app in the Marketplace build flow",
+      "detail": "Sign into the Zoom App Marketplace with an account that has developer permissions (the Developer link only appears with the right role), then Develop, Build an app, and choose General app.",
+      "source": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Set basic info and pick how the app is managed",
+      "detail": "Name the app and choose Admin-managed (account admins add and manage it, with account-level data access depending on scope) or User-managed (individual users authorize it, limited to their own data). The management type affects the features and scopes available. The build flow auto-generates client ID and client secret, with distinct development and production credentials.",
+      "source": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Configure the OAuth information",
+      "detail": "Enter the required OAuth redirect URL, and add every redirect endpoint to the required OAuth allow list; optional Strict Mode and subdomain checks restrict redirects further to exact matches.",
+      "source": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Add only the scopes you need",
+      "detail": "Each scope you add is a request to the Zoom Security Review team under a minimal-access principle, and scopes judged unnecessary may be rejected, so request the minimum the integration actually uses.",
+      "source": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Test with the local test flow or a beta app",
+      "detail": "Use the Local Test page to add and preview the app and share it with internal users. Beta apps can be shared with restrictions via an authorization URL, but only with members of your own Zoom account, and beta apps cannot be published.",
+      "source": "https://developers.zoom.us/docs/integrations/create"
+    },
+    {
+      "title": "Choose the audience and submit if publishing",
+      "detail": "Apps for users within your own Zoom account skip the standard Marketplace review. Public and unlisted apps go through the two-phase review (operations, then security), with a documented response within 5 business days; published apps must provide Terms of Use, a Privacy Policy, self-serve documentation and a Support URL.",
+      "source": "https://developers.zoom.us/docs/distribute/"
+    }
+  ],
+  "requirements": [
+    "A Zoom account with developer permissions; the Marketplace Developer link only appears with the right role",
+    "The OAuth redirect URL and every allowed redirect endpoint for the allow list",
+    "A minimal scope list you can justify to the security review team",
+    "For publishing: support commitments (Terms of Use, Privacy Policy, self-serve documentation, Support URL)"
+  ],
+  "nuances": [
+    "Scopes are pre-reviewed, not just requested: adding a scope is itself a submission to the Zoom Security Review team, and unnecessary scopes can be rejected before or during app review.",
+    "Development and production credentials are different client ID/secret pairs; the production pair is for when the app is ready to publish.",
+    "Beta apps are fenced in: they can only be shared with members of the developer's own Zoom account and can never be published to the Marketplace.",
+    "Internal apps skip review entirely: choosing the 'users within my Zoom account' audience avoids the standard Marketplace review, and private and beta apps also require no review.",
+    "Unlisted apps limit discoverability but not scrutiny: they are not publicly listed, yet they still go through the same review process as public apps.",
+    "Publishing creates ongoing obligations: Zoom requires developers to actively support published apps with terms, a privacy policy, self-serve documentation and a support URL."
+  ],
+  "common_blockers": [
+    {
+      "problem": "The Developer link is not visible in the Zoom App Marketplace.",
+      "solution": "The link only appears for accounts with developer permissions. Have the account admin assign the correct role through role management."
+    },
+    {
+      "problem": "A scope request was rejected.",
+      "solution": "Zoom applies a minimal-access principle and rejects scopes it judges unnecessary for the app. Remove the scope or document why the integration cannot work without it."
+    },
+    {
+      "problem": "External testers cannot install the beta app.",
+      "solution": "Beta app access is limited to members of the developer's own Zoom account by design. For external users, move to production credentials and submit the app for review."
+    },
+    {
+      "problem": "OAuth works in testing but fails after publishing.",
+      "solution": "Development and production app credentials are distinct pairs, and redirects must match the OAuth allow list. Switch to the production credentials and verify every redirect endpoint is allow-listed."
+    }
+  ],
+  "uncertainties": [
+    "Whether the 'within 5 business days' response figure, stated on Zoom's developer blog, covers both review phases or only the initial response; total approval time with remediation rounds is not stated.",
+    "When scope requests are adjudicated relative to the full app review; the docs say scope additions go to the security review team without giving a separate timeline.",
+    "How long re-review takes after remediation feedback; no figure is documented.",
+    "Whether review response times differ between public and unlisted apps; the docs describe one process for both."
+  ],
+  "agent_can_do": [
+    "Implement the OAuth flow against the development credentials: authorize redirect, token exchange and refresh",
+    "Map each Zoom API endpoint the integration calls to the minimum scope set it needs",
+    "Draft the technical design and data handling answers the security review asks for",
+    "Track the documented 5-business-day response window and any remediation feedback"
+  ],
+  "human_must_do": [
+    "Own the Zoom account and get developer permissions assigned; the build flow is login-gated",
+    "Choose admin-managed versus user-managed and the final scope list",
+    "Provide the support assets for publishing: Terms of Use, Privacy Policy, documentation and Support URL",
+    "Respond to review feedback and own remediation and resubmission"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating a Zoom OAuth (General) app is self-serve: sign into the Zoom App Marketplace with a developer-permission account, then Develop, Build an app; the Developer link only appears with the right role.",
+      "source": "https://developers.zoom.us/docs/integrations/create",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The build flow auto-generates app credentials, with distinct development and production client ID/secret pairs; production credentials are for when the app is ready to publish.",
+      "source": "https://developers.zoom.us/docs/integrations/create",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "OAuth setup requires a redirect URL and an OAuth allow list of valid redirect endpoints; optional Strict Mode and subdomain checks restrict redirects to exact matches.",
+      "source": "https://developers.zoom.us/docs/integrations/create",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Adding a scope submits a request to the Zoom Security Review team under a minimal-access principle, and scopes judged unnecessary for the app may be rejected.",
+      "source": "https://developers.zoom.us/docs/integrations/create",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Beta apps cannot be published and can only be shared with members of the developer's own Zoom account; the Local Test page supports internal testing and listing previews.",
+      "source": "https://developers.zoom.us/docs/integrations/create",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Public and unlisted apps undergo a dedicated review process; private and beta apps do not require review, and apps for users within the developer's own Zoom account skip the standard Marketplace review.",
+      "source": "https://developers.zoom.us/docs/distribute/app-review-process/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The review has an operations phase (submission completeness, branding, functionality, usability, compliance) followed by a security phase (technical design review, OAuth scope evaluation, security testing), and the team either approves or returns remediation feedback.",
+      "source": "https://developers.zoom.us/docs/distribute/app-review-process/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Published apps carry ongoing support obligations: Terms of Use, Privacy Policy, self-serve documentation and a Support URL under the Marketplace Developer Agreement.",
+      "source": "https://developers.zoom.us/docs/distribute/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Apps are reviewed Monday to Friday on a first come first serve basis, with a submission response time within 5 business days.",
+      "source": "https://developers.zoom.us/blog/how-long-does-app-review-take/",
+      "status": "docs-supported"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-23"
+}
