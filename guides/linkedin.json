@@ -1,0 +1,150 @@
+{
+  "slug": "linkedin",
+  "app_name": "LinkedIn",
+  "website": "https://www.linkedin.com",
+  "developer_console": "https://developer.linkedin.com/",
+  "difficulty": "medium",
+  "difficulty_reason": "Several portal surfaces rather than one short form: create the app in the Developer Portal, associate it with a LinkedIn Page and get the Page super admin to verify it, request products on the Products tab, configure credentials and redirect URLs on the Auth tab, and plan access-tier upgrades for marketing products. No single step is technically hard.",
+  "setup_time": "unknown - LinkedIn documents no app-registration timeline; the only documented window is that a Page super admin has 30 days to approve or deny an app-verification request, while product-access approvals (other than a 'no fixed timeline' note for restricted APIs) carry no documented estimate",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the LinkedIn Developer Portal, and three 'Open Permissions' (Sign in with LinkedIn using OpenID Connect profile and email, and Share on LinkedIn w_member_social) are self-serve on the app's Products tab with no approval. Everything else is gated: LinkedIn states that most permissions and partner programs require explicit approval - marketing API products, the Sales Navigator Application Platform, and talent programs are each applied for and approved separately, restricted marketing APIs are evaluated case by case, and Compliance access is closed entirely.",
+    "wait": "The one documented window belongs to your own organization, not LinkedIn: the Page super admin has 30 days to approve or deny the app-verification request (a denial invalidates all generated verification links for the app). For restricted marketing APIs LinkedIn documents evaluation on a case-by-case basis with no fixed timeline; no general approval timeline is documented for the standard product applications.",
+    "notes": "Approval in LinkedIn's model is per product, not per app: the scopes your app can request are exactly those granted by the products approved on its Products tab, and changing scopes later forces members to re-authenticate. The app must be associated with a LinkedIn Page for certain functionality, and the page association is only active once a Page super admin approves the verification request. Marketing products add a second layer: Advertising API and Community Management API each start at a constrained Development tier (Community Management development access expires if the integration is not completed within twelve months), and Standard tier is a separate application. LinkedIn reserves the right to select partners at its discretion even when minimum requirements are met.",
+    "wait_basis": "documented",
+    "wait_short": "Page admin verification documented at 30 days; LinkedIn product approvals undocumented (restricted APIs: no fixed timeline)"
+  },
+  "summary": "Registering an OAuth app with LinkedIn is self-serve: create the app in the Developer Portal and you immediately get a Client ID and Client Secret, and the three open products (Sign in with LinkedIn using OpenID Connect, Share on LinkedIn) can be switched on in the Products tab with no review. The gates are structural: the app must be associated with a LinkedIn Page and a Page super admin must approve the verification request (documented 30-day window, denial kills every generated link), and almost every permission beyond the open three comes from a separately approved product - marketing APIs with Development/Standard tiers, the SNAP partner program for sales, talent programs, and case-by-case restricted APIs with no fixed timeline.",
+  "steps": [
+    {
+      "title": "Create the app in the LinkedIn Developer Portal",
+      "detail": "Create a new application at developer.linkedin.com under My apps. Each application is assigned a unique Client ID and Client Secret, shown on the app's Auth tab.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+    },
+    {
+      "title": "Associate a LinkedIn Page and request verification",
+      "detail": "Certain functionality and products require the app to be associated with a LinkedIn Page, which acts as the app's publisher. On the app's Settings tab, click Verify, generate the verification URL, and send it to the Page super admin, who approves or denies the request. The super admin has 30 days; a denial invalidates all generated links by any developer on that app.",
+      "source": "https://www.linkedin.com/help/linkedin/answer/a1665329"
+    },
+    {
+      "title": "Enable the open products on the Products tab",
+      "detail": "Sign in with LinkedIn using OpenID Connect (profile and email permissions) and Share on LinkedIn (w_member_social) are Open Permissions available to all developers via self-service on the app's Products tab - no approval needed.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+    },
+    {
+      "title": "Apply for any gated products the integration needs",
+      "detail": "Most permissions and partner programs require explicit approval: apply for marketing API products (Advertising, Lead Sync, Conversions, Matched Audiences, Community Management, Events Management) through the Products tab, join the Sales Navigator Application Platform for sales permissions, or apply to talent programs. Audience Insights and Media Planning are restricted and evaluated case by case with no fixed timeline; the Company Intelligence API is not accepting new applications and Compliance permissions are closed.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/marketing/getting-access"
+    },
+    {
+      "title": "Configure the Auth tab for OAuth",
+      "detail": "On the Auth tab, add redirect URLs for the OAuth authorization-code flow. LinkedIn only communicates with identified trusted URLs: they must be absolute HTTPS URLs, query parameters are ignored, and fragments (#) are invalid. The Auth tab shows the scopes currently available to the app, which come from its approved products; if scopes change, members must re-authenticate.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+    },
+    {
+      "title": "Plan the access-tier upgrade for marketing products",
+      "detail": "Advertising API and Community Management API applications start at the Development tier and require a separate application for Standard. Community Management development access caps calls (500 per app per 24 hours, 100 per member per 24 hours, no batch calls, social-action webhooks disabled) and must be completed within twelve months of provisioning; Advertising development access allows reads without limits but edits on up to five ad accounts. Standard tier for Advertising is requested via a support ticket on the Developer Support Portal.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/marketing/getting-access"
+    }
+  ],
+  "requirements": [
+    "A LinkedIn account and a new app in the Developer Portal",
+    "A LinkedIn Page to associate with the app, plus a reachable Page super admin to approve the verification request within 30 days",
+    "Absolute HTTPS redirect URLs for the OAuth flow (no query parameters relied upon, no fragments)",
+    "For anything beyond sign-in and sharing: an application to each gated product, and for restricted APIs a case-by-case evaluation"
+  ],
+  "nuances": [
+    "LinkedIn's own documentation states that most permissions and partner programs require explicit approval; only the three Open Permissions (profile, email, w_member_social) are available to every developer without special approval.",
+    "Scopes are a consequence of products, not a free choice: the Auth tab only shows scopes granted by approved products, and a scope change forces every member to re-authenticate.",
+    "The 30-day verification window is enforced on your side: it is the Page super admin's deadline to approve the app association, and their denial invalidates all generated verification links for the app.",
+    "Development tier is genuinely temporary for Community Management: integrations must be completed within twelve months of provisioning, with hard call caps and disabled webhooks until the Standard tier is granted.",
+    "Access to Advertising API is a mandatory prerequisite for applying to Matched Audiences, Audience Insights and Media Planning.",
+    "LinkedIn reserves the right to review applications and select partners at its discretion; meeting the minimum tier requirements does not guarantee an upgrade."
+  ],
+  "common_blockers": [
+    {
+      "problem": "A needed scope is not listed on the app's Auth tab.",
+      "solution": "Scopes come from approved products, not direct selection. Apply for the product that grants the permission on the Products tab; after approval the scope appears and existing members must re-authenticate."
+    },
+    {
+      "problem": "The app verification request is stuck.",
+      "solution": "Verification is approved by the Page super admin, not LinkedIn. Confirm the generated URL reached a super admin of the associated Page; they have 30 days, and if any super admin denies the request all generated links are invalidated and must be regenerated."
+    },
+    {
+      "problem": "The OAuth redirect fails with a URL error.",
+      "solution": "Redirect URLs must be registered as absolute HTTPS URLs on the Auth tab; LinkedIn ignores query parameters and rejects fragments, so register the bare callback path."
+    },
+    {
+      "problem": "Marketing API calls hit development-tier limits in production.",
+      "solution": "Development tier is capped by design (for Community Management: 500 calls per app and 100 per member per 24 hours, no batch calls, webhooks disabled, twelve-month completion limit). Apply separately for the Standard tier; for Advertising that is a support ticket on the Developer Support Portal."
+    }
+  ],
+  "uncertainties": [
+    "How long LinkedIn takes to approve standard product applications (for example Advertising API or Lead Sync); no timeline is documented - only restricted APIs carry an explicit 'no fixed timeline' statement.",
+    "Whether the three Open Permissions can ever be revoked or gated for a specific app; the docs describe them as available to all developers without special approval but do not discuss revocation.",
+    "How long Standard-tier upgrades take after application, and what evidence the review weighs; the docs list criteria but no decision timeline.",
+    "Whether apps that never associate a LinkedIn Page lose any specific functionality beyond the products that require it; the help page says 'certain functionality and products' without enumerating them."
+  ],
+  "agent_can_do": [
+    "Implement the 3-legged OAuth flow: authorization redirect, code exchange, and token handling (the Developer Portal also has a manual token generator for testing)",
+    "Map each LinkedIn API the integration calls to the product that grants it, and draft the product applications",
+    "Track the 30-day Page-super-admin verification window and flag a denial (which invalidates all generated links)",
+    "Monitor development-tier rate caps and the twelve-month Community Management completion deadline"
+  ],
+  "human_must_do": [
+    "Own the LinkedIn account, create the app, and accept the platform terms",
+    "Provide the LinkedIn Page association and get a Page super admin to approve the verification request",
+    "Decide which gated products the integration genuinely needs and submit those applications",
+    "Decide when the integration is ready to request Standard-tier upgrades"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating a LinkedIn app is self-serve in the Developer Portal, and each app is assigned a unique Client ID and Client Secret, shown on the Auth tab.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Only three Open Permissions (Sign in with LinkedIn OIDC profile and email, Share on LinkedIn w_member_social) are available to all developers without special approval; most permissions and partner programs require explicit approval.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The app must be associated with a LinkedIn Page for certain functionality, and the Page super admin approves or denies the verification request within 30 days; a denial invalidates all generated verification links.",
+      "source": "https://www.linkedin.com/help/linkedin/answer/a1665329",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Marketing API products require approval, with GA programs open to all approved developers and restricted programs (Audience Insights, Media Planning) evaluated case by case with no fixed timeline; the Company Intelligence API is not accepting new applications.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/marketing/getting-access",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Advertising API and Community Management API start at Development tier with constraints (Community Management: 500 calls per app and 100 per member per 24 hours, no batch calls, webhooks disabled, twelve-month completion limit; Advertising: edits limited to five ad accounts), and Standard tier is a separate application, for Advertising via a Developer Support Portal ticket.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/marketing/getting-access",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Redirect URLs must be absolute HTTPS; query parameters are ignored and fragments are invalid, and LinkedIn servers only communicate with registered trusted URLs.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The scopes an app can request come from its approved products (shown on the Auth tab), and changing scopes forces members to re-authenticate.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Sales integrations require approval as a Sales Navigator Application Platform (SNAP) partner, talent integrations require applying to their programs, and Compliance permissions are closed and may not be requested.",
+      "source": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The LinkedIn Developer Portal (developer.linkedin.com) is reachable and serves the app-management entry point.",
+      "source": "https://developer.linkedin.com/",
+      "status": "tested"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-24"
+}
