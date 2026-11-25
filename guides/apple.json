@@ -1,0 +1,145 @@
+{
+  "slug": "apple",
+  "app_name": "Apple",
+  "website": "https://developer.apple.com",
+  "developer_console": "https://developer.apple.com/account",
+  "difficulty": "medium",
+  "difficulty_reason": "Several console surfaces rather than one short form: a primary App ID enabled for Sign in with Apple, a Services ID with website URLs (domains, subdomains, return URLs), and a signing key whose private key is downloaded once. On top of the portal work, the client secret is not issued by Apple - it is a JWT the developer must mint and sign with ES256. No single step is technically hard, but the JWT minting is unusual among providers.",
+  "setup_time": "unknown - Apple documents no registration timeline; the Services ID and key configuration are self-serve in Certificates, Identifiers & Profiles, and the only clock in the docs is the six-month maximum lifetime of each self-signed client secret",
+  "approval": {
+    "required": false,
+    "kind": "none",
+    "wait": "none",
+    "notes": "There is no review or approval step anywhere in the documented configuration flow: creating the App ID capability, the Services ID, the website URL registration and the signing key are all self-serve in the developer account, and Apple explicitly notes that no file needs to be uploaded to your server to register domains and subdomains. The real gates are structural, not review-based: configuration lives in the Certificates, Identifiers & Profiles area of an Apple Developer Program membership (documented at $99 per year), the web flow must be associated to a primary App ID enabled for Sign in with Apple, and the client secret is a self-signed JWT that expires after at most six months and must be re-minted.",
+    "requirement": "not-required",
+    "wait_basis": "none",
+    "wait_short": "no review; self-serve once enrolled"
+  },
+  "summary": "Registering Sign in with Apple for the web is self-serve with no review: in Certificates, Identifiers & Profiles you register a Services ID, select Sign in with Apple, associate it with a primary App ID enabled for the capability, and list your website's domains, subdomains and return URLs (at least one domain; up to 10 website URLs for individuals, 100 for organizations; no verification file upload required). The distinctive costs are a paid Apple Developer Program membership ($99 per year) and the client secret: Apple never issues one - you mint it yourself as an ES256-signed JWT (kid = key ID, iss = Team ID, aud = https://appleid.apple.com, sub = your Services ID) with a hard maximum lifetime of six months, so secret rotation is a recurring task the developer owns.",
+  "steps": [
+    {
+      "title": "Hold an Apple Developer Program membership",
+      "detail": "Configuration happens in the Certificates, Identifiers & Profiles area of the developer account, which comes with an Apple Developer Program membership, documented at $99 annual membership (the Enterprise Program at $299/year is for private employee distribution).",
+      "source": "https://developer.apple.com/programs/"
+    },
+    {
+      "title": "Enable a primary App ID for Sign in with Apple",
+      "detail": "The web configuration must be associated to an existing primary iOS, macOS, tvOS, or watchOS App ID enabled for Sign in with Apple - even a web-only integration is anchored to a primary App ID.",
+      "source": "https://developer.apple.com/help/account/configure-sign-in-with-apple-for-the-web"
+    },
+    {
+      "title": "Register and configure the Services ID",
+      "detail": "In Certificates, Identifiers & Profiles, add an identifier of type Services ID, register it, then select Sign in with Apple and click Configure. Choose the primary App ID related to your website, and under Website URLs provide your domains, subdomains, or return URLs as a comma-delimited list; at least one domain or subdomain is required. Individuals can register up to 10 website URLs, organizations up to 100, and no file upload on your server is needed to complete domain registration.",
+      "source": "https://developer.apple.com/help/account/configure-sign-in-with-apple-for-the-web"
+    },
+    {
+      "title": "Create the signing key",
+      "detail": "The client secret is signed with a private key downloaded from your developer account; the JWT header's kid is the 10-character key identifier generated for that key. Create the key in the developer account and store the downloaded private key securely.",
+      "source": "https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret"
+    },
+    {
+      "title": "Mint the client secret as a signed JWT",
+      "detail": "Apple does not issue a client secret: you generate a JWT with header alg=ES256 and kid=<key ID>, payload iss=<10-character Team ID>, iat=<now>, exp (requesting more than 15777000 seconds - six months - in the future is an error), aud=https://appleid.apple.com, and sub=<the same App ID or Services ID used as client_id, case-sensitive>. Sign it with ECDSA on the P-256 curve with SHA-256; standard JWT libraries handle this in any language.",
+      "source": "https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret"
+    },
+    {
+      "title": "Run the OAuth flow against Apple's endpoints",
+      "detail": "Web apps and non-Apple platforms use Sign in with Apple JS or the REST authorization flow; the server then validates the authorization code (or an existing refresh token) by POSTing client_id, the self-minted client_secret, and the grant to https://appleid.apple.com/auth/token, receiving an identity token, access token and refresh token. Fetch Apple's public keys to verify token signatures, and call the token-revocation endpoint when a user unlinks from your app.",
+      "source": "https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens"
+    }
+  ],
+  "requirements": [
+    "An Apple Developer Program membership (documented at $99 per year) - configuration lives in Certificates, Identifiers & Profiles",
+    "A primary App ID enabled for Sign in with Apple, even for a web-only integration",
+    "At least one domain or subdomain to register, plus the return URLs for the OAuth flow",
+    "The downloaded private key and a JWT library to mint ES256-signed client secrets"
+  ],
+  "nuances": [
+    "The client secret is a build artifact, not an issued credential: Apple never shows you a secret string - you mint a JWT yourself, and its expiry cannot exceed 15777000 seconds (six months), so rotation is a recurring calendar item, not an edge case.",
+    "Even a pure web integration is anchored to a native-app concept: the Services ID must be associated with a primary iOS, macOS, tvOS, or watchOS App ID enabled for Sign in with Apple.",
+    "Domain registration is verification-free: Apple explicitly states you do not need to upload a file on your server to complete registration of domains and subdomains.",
+    "Website URL capacity depends on enrollment type: 10 for individuals, 100 for organizations.",
+    "The subject of the client secret JWT must equal the client_id exactly and is case-sensitive: for a web flow that is the Services ID, not the App ID.",
+    "Apple documents token revocation as the way to invalidate tokens and user authorizations when a user stops using the app - the integration owns calling it."
+  ],
+  "common_blockers": [
+    {
+      "problem": "Token validation rejects the client secret.",
+      "solution": "Re-check the JWT claims against Apple's required format: alg=ES256 with the correct kid, iss set to the 10-character Team ID, aud exactly https://appleid.apple.com, sub equal to the client_id (case-sensitive), and exp no more than six months out; sign with ECDSA P-256 and SHA-256."
+    },
+    {
+      "problem": "A previously working client secret suddenly fails.",
+      "solution": "Client secrets are self-minted JWTs with a maximum six-month lifetime. Mint a fresh one from the same key and automate rotation before expiry."
+    },
+    {
+      "problem": "The OAuth redirect is refused.",
+      "solution": "Return URLs must be registered under Website URLs on the Services ID configuration, together with at least one domain or subdomain; re-save the configuration after changes."
+    },
+    {
+      "problem": "There is no App ID to select in the Configure modal.",
+      "solution": "The modal lists only primary App IDs already enabled for Sign in with Apple. Enable the capability on an existing App ID first, then return to the Services ID configuration."
+    }
+  ],
+  "uncertainties": [
+    "How long Apple Developer Program enrollment takes from payment to active Certificates, Identifiers & Profiles access; the cited pages document the price but no activation timeline.",
+    "Whether Apple performs any review of the registered website URLs or Services ID configuration after saving; the docs describe a save-and-done flow with no review step, but do not state one way or the other.",
+    "Whether the Sign in with Apple private key can be re-downloaded after the initial download or must be regenerated if lost; the client-secret doc refers to the key 'you downloaded' without describing recovery.",
+    "Whether website URL registrations can be edited in place or require re-association; the help page documents adding and removing the association but not mid-life edits."
+  ],
+  "agent_can_do": [
+    "Mint and rotate the ES256-signed client-secret JWT on a schedule well inside the six-month cap",
+    "Implement the authorization and token-validation calls against appleid.apple.com, including signature verification against Apple's public keys",
+    "Track the client-secret expiry and alert before rotation is due",
+    "Call token revocation when a user disconnects Sign in with Apple"
+  ],
+  "human_must_do": [
+    "Pay for and own the Apple Developer Program membership and accept its agreements",
+    "Create the App ID capability, Services ID, and signing key in the developer account, and safeguard the one-time downloaded private key",
+    "Decide the registered domains and return URLs",
+    "Own any App Store obligations if the same credentials back a native app"
+  ],
+  "evidence": [
+    {
+      "claim": "Web configuration requires creating a Services ID and associating the website to an existing primary App ID enabled for Sign in with Apple; at least one domain or subdomain is required and no verification file upload is needed.",
+      "source": "https://developer.apple.com/help/account/configure-sign-in-with-apple-for-the-web",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Individual enrollments can register up to 10 website URLs and organizations up to 100.",
+      "source": "https://developer.apple.com/help/account/configure-sign-in-with-apple-for-the-web",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Apple Developer Program membership is documented at $99 annual membership, with the Enterprise Program at $299/year for private employee distribution.",
+      "source": "https://developer.apple.com/programs/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The client secret is a self-created JWT signed with the private key downloaded from the developer account: header alg=ES256 and kid=<10-character key identifier>, payload iss=<10-character Team ID>, aud=https://appleid.apple.com, sub=<client_id, case-sensitive>.",
+      "source": "https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Requesting an expiration time more than 15777000 seconds (six months) in the future is an error, so every client secret has a hard six-month maximum lifetime.",
+      "source": "https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Token validation is a POST to https://appleid.apple.com/auth/token with client_id, client_secret and the authorization code or refresh token, returning an identity token, access token and (for the code grant) refresh token.",
+      "source": "https://developer.apple.com/documentation/signinwithapplerestapi/generate-and-validate-tokens",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Web apps and other platforms such as Android use Sign in with Apple JS; the REST API also documents fetching Apple's public key to verify token signatures and a token-revocation endpoint for users no longer associated with the app.",
+      "source": "https://developer.apple.com/documentation/signinwithapplerestapi",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Apple Developer account console (developer.apple.com/account) is reachable as the entry point for Certificates, Identifiers & Profiles.",
+      "source": "https://developer.apple.com/account",
+      "status": "tested"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-25"
+}
