@@ -1,0 +1,145 @@
+{
+  "slug": "spotify",
+  "app_name": "Spotify",
+  "website": "https://www.spotify.com",
+  "developer_console": "https://developer.spotify.com/dashboard",
+  "difficulty": "easy",
+  "difficulty_reason": "One short dialog (app name, description, terms checkbox) produces the Client ID and Client Secret immediately, plus a settings page for the website URL and redirect URIs. The technically interesting parts are operational (allowlist management, quota modes), not configuration complexity.",
+  "setup_time": "unknown - creating the app is immediate in the Developer Dashboard, while the extended-quota review is documented as taking up to six weeks and is gated behind a partner application that is only open to organizations",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the Spotify Developer Dashboard with no review, and every new app starts in development mode: up to 5 allowlisted users, per-account quota buckets, and a requirement that the app owner holds a Spotify Premium account. The gate is extended quota mode (unlimited users, higher rate limits): since May 15 2025 Spotify only accepts quota-extension applications from organizations, not individuals, with a 250k monthly-active-user minimum among the implementation requirements, followed by an app review team evaluation.",
+    "wait": "The quota-mode documentation states that once the quota extension questionnaire is submitted in the dashboard, Spotify's app review team reviews the information, tests the app, and emails feedback, and that this review process can take up to six weeks.",
+    "notes": "The May 15 2025 policy change is the load-bearing fact: individuals can no longer apply for extended quota at all - applications must come from an organization via a company email form, and the listed implementation requirements include an established business entity, an active launched service, at least 250k MAUs, availability in key Spotify markets, commercial viability, and adherence to terms. Even for organizations, the sequence is two-stage: the partner application form first, and only after it is approved can the app's quota extension be requested and reviewed. Development mode remains fully usable without any review, but non-allowlisted users' API calls return 403 and quota buckets are shared across all development-mode apps on the account.",
+    "wait_basis": "documented",
+    "wait_short": "creation self-serve; extended-quota review documented at up to six weeks (organizations only)"
+  },
+  "summary": "Registering a Spotify OAuth app is self-serve: create the app in the Developer Dashboard (one dialog, up to 25 apps per account) and you immediately get a Client ID and Client Secret. Every new app starts in development mode - maximum 5 allowlisted users, shared per-account API quota, and the app owner must have Spotify Premium for the app to function. Going wider requires extended quota mode, and since May 15 2025 that door is closed to individuals: only organizations with an established business entity, a launched service, and at least 250k monthly active users can apply, and the subsequent app review is documented as taking up to six weeks.",
+  "steps": [
+    {
+      "title": "Create the app in the Developer Dashboard",
+      "detail": "Log in to the dashboard with a Spotify account (Premium is required to use the Web API, and the app owner must have Premium for development-mode apps to function), click Create an App, enter a name and description (both shown on the user's grant screen), tick the Developer Terms of Service checkbox, and create. You receive the Client ID and Client Secret immediately; an account can hold up to 25 apps, and the secret has a ROTATE button if it is ever compromised.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/apps"
+    },
+    {
+      "title": "Configure settings and redirect URIs",
+      "detail": "In Edit Settings, add the app's website URL and one or more Redirect URIs that Spotify's authentication service may invoke after login. iOS redirect URIs have extra rules: all lowercase, an app-unique prefix (not a general one like http), used only for Spotify authentication, with a path after the first pair of slashes.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/apps"
+    },
+    {
+      "title": "Work within development mode",
+      "detail": "New apps begin in development mode (check the App Status value in settings). Up to 5 authenticated Spotify users can use the app, and each must be added by name and Spotify email under Settings, Users Management. Requests beyond the per-account quota buckets return 429 with reason QUOTA_EXCEEDED, and API calls from non-allowlisted users return 403.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes"
+    },
+    {
+      "title": "Plan around rate limits",
+      "detail": "Rate limits are separate from quota: they are calculated over a rolling 30-second window and vary by quota mode, with extended-quota apps getting a much higher limit. On a 429, honor the Retry-After header, use batch endpoints (for example Get Multiple Albums), and reuse playlist snapshot_id values to avoid redundant requests.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/rate-limits"
+    },
+    {
+      "title": "If going wide: the organization gate",
+      "detail": "Extended quota mode removes the allowlist and user cap and raises rate limits, but as of May 15 2025 Spotify only accepts applications from organizations, via a company email form. The documented implementation requirements are: an established (legally registered) business entity, an active launched service, a minimum of 250k monthly active users, availability in key Spotify markets, commercial viability, and adherence to the terms.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes"
+    },
+    {
+      "title": "Request and survive the extended-quota review",
+      "detail": "If the partner application form is approved, request the move in the dashboard: app page, Settings, Quota extension Request tab, fill out the 4-step questionnaire, and submit. A blue 'Sent' marker appears on the app detail page; the app review team reviews the information, tests the app, and emails feedback to the address on the Spotify account. The documented review time is up to six weeks.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes"
+    }
+  ],
+  "requirements": [
+    "A Spotify account with Premium - required to use the Web API at all, and the app owner must have Premium for development-mode apps to function",
+    "Redirect URIs to allowlist in the app settings (iOS URIs have lowercase/prefix/path rules)",
+    "For development mode: the name and Spotify email of every tester (5-user cap)",
+    "For extended quota: a registered organization with a launched service and at least 250k monthly active users - individuals cannot apply"
+  ],
+  "nuances": [
+    "The gate is organizational, not technical: since May 15 2025 extended quota applications from individuals are not accepted at all, regardless of app quality - a solo developer's app is effectively capped at 5 allowlisted users forever.",
+    "The 250k MAU requirement applies to the applying service, not the Spotify integration: the quota extension path is designed for already-large products adding Spotify, not for products hoping to grow into it.",
+    "Quota and rate limits are two separate systems: quota buckets limit total development-mode requests per developer account (429 QUOTA_EXCEEDED), while rate limits police a rolling 30-second window (429 with Retry-After).",
+    "An unlisted tester can sometimes log in to a development-mode app, but every API call they make still returns 403 - the allowlist gates API access, not the login screen.",
+    "The 5-user development cap counts authenticated users on the allowlist, while quota buckets are shared across all development-mode apps belonging to the same developer account.",
+    "The client secret can be rotated instantly with the ROTATE button on the app overview page if it is ever exposed."
+  ],
+  "common_blockers": [
+    {
+      "problem": "A tester's API calls all return 403.",
+      "solution": "In development mode every user must be on the app's allowlist. Add them under Settings, Users Management with the name and Spotify email address of their account."
+    },
+    {
+      "problem": "Requests fail with 429 and reason QUOTA_EXCEEDED.",
+      "solution": "This is the development-mode quota, not the rate limit: endpoints are grouped into shared buckets per developer account. Reduce request volume across all development apps on the account; only extended quota mode lifts it."
+    },
+    {
+      "problem": "Requests fail with plain 429 rate limiting.",
+      "solution": "Respect the Retry-After header on the 429 response, switch multi-object fetches to batch endpoints, and reuse playlist snapshot_id values instead of re-downloading unchanged playlists."
+    },
+    {
+      "problem": "There is no way to request a quota extension as an individual developer.",
+      "solution": "There isn't one - since May 15 2025 only organizations meeting the listed requirements (registered entity, launched service, 250k+ MAUs) can apply via the company-email form. Plan the product for development mode's 5-user cap or seek an organizational partner."
+    }
+  ],
+  "uncertainties": [
+    "The specific quota-bucket groupings and limits for development mode; the docs say they exist and are shared per developer account, but that groupings and limits are subject to change and give no numbers.",
+    "The actual rate-limit numbers per mode; the docs describe the rolling 30-second window and state that extended-quota apps get a much higher limit, but publish no figures.",
+    "How long the organization (partner application) stage takes before the six-week app review even begins; no timeline is documented for the form itself.",
+    "Whether apps approved for extended quota before the May 15 2025 policy change retain their mode indefinitely; the docs describe the change for applications but not grandfathering."
+  ],
+  "agent_can_do": [
+    "Implement the OAuth authorization-code flow against Spotify's endpoints with the registered redirect URIs",
+    "Manage the development-mode allowlist additions and track the 5-user cap",
+    "Build backoff-retry honoring Retry-After, use batch endpoints, and cache playlist snapshot_id values",
+    "Watch for 429 QUOTA_EXCEEDED responses and distinguish them from rate limiting"
+  ],
+  "human_must_do": [
+    "Own the Spotify account and hold the Premium subscription the app depends on",
+    "Accept the Developer Terms of Service and own Developer Policy compliance",
+    "Decide whether the product can live within development mode or needs the organization-only extended quota path",
+    "Submit the partner application and quota extension questionnaire from a company identity, and own the review correspondence"
+  ],
+  "evidence": [
+    {
+      "claim": "Creating an app is self-serve in the Developer Dashboard (name, description, terms checkbox), yields an immediate Client ID and Client Secret, is limited to 25 apps per account, and the secret can be rotated with a ROTATE button.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/apps",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "A Spotify Premium account is required to use the Web API, and the app owner must have Premium for development-mode apps to function.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Newly created apps begin in development mode, limited to 5 authenticated users who must each be added to the app's allowlist; non-allowlisted users' API requests receive 403, and quota overages return 429 with reason QUOTA_EXCEEDED.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "As of May 15 2025, Spotify only accepts quota-extension applications from organizations (not individuals) via a company email form, with requirements including a legally registered business entity, an active launched service, at least 250k MAUs, availability in key Spotify markets, commercial viability, and adherence to terms.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "After partner-application approval, the quota extension is requested in the dashboard (4-step questionnaire), the app review team tests the app and emails feedback, and the review process can take up to six weeks.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Extended quota mode removes the user cap and allowlist and grants a higher rate limit than development mode.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/quota-modes",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Rate limits are calculated over a rolling 30-second window, vary by quota mode, return 429 responses that normally include a Retry-After header, and are a separate enforcement mechanism from development-mode quota restrictions.",
+      "source": "https://developer.spotify.com/documentation/web-api/concepts/rate-limits",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Spotify Developer Dashboard (developer.spotify.com/dashboard) is reachable as the app-management entry point.",
+      "source": "https://developer.spotify.com/dashboard",
+      "status": "tested"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-26"
+}
