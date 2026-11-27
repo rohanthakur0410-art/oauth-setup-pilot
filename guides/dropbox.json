@@ -1,0 +1,145 @@
+{
+  "slug": "dropbox",
+  "app_name": "Dropbox",
+  "website": "https://www.dropbox.com",
+  "developer_console": "https://www.dropbox.com/developers/apps",
+  "difficulty": "easy",
+  "difficulty_reason": "One console flow: create the app (choosing scoped access - App folder or Full Dropbox), pick permission scopes on the Permissions tab, and register exact redirect URIs on the Settings tab. The app key and secret are issued immediately. The complexity is policy, not configuration.",
+  "setup_time": "unknown - creating the app and getting credentials is immediate in the Developer Console, while Dropbox documents no timeline for the production-status review itself; the only documented clock runs against the developer (two weeks to apply and be approved after the 50th linked user)",
+  "approval": {
+    "required": false,
+    "requirement": "conditional",
+    "kind": "App creation is self-serve in the Developer Console with no review: a new app gets development status and its app key and secret immediately. Development status initially connects only to your own account, and enabling additional users raises that to a hard cap of 500 total linked Dropbox users. The gate is production status, which removes the cap - it requires an application reviewed against the branding guidelines, terms, and a least-privilege check of the app's requested permissions.",
+    "wait": "Dropbox documents no review timeline for production status. The documented windows all bind the developer: the request is not reviewed until the app has linked at least 50 users, and once the 50th user links, the app has two weeks to apply for and receive approval before linking additional users is frozen.",
+    "notes": "The freeze mechanics are the distinctive part: at 50 linked users a two-week countdown starts, and missing it freezes the app's ability to link new users even though the absolute cap is 500; unlinking users does not unfreeze - only production approval does. A review can be requested early via the Request early review field with evidence and justification. Once approved, the app's name can never be changed. The production review explicitly checks that permissions are not broader than the app's implemented functionality, so planned-but-unbuilt features needing broader scope must be disclosed in the application. Pre-built components (Chooser, Saver, Embedder) are exempt: they grant per-user, per-action access and do not require production approval.",
+    "wait_basis": "unknown",
+    "wait_short": "creation self-serve; production review timeline undocumented, with a 2-week application deadline after 50 linked users"
+  },
+  "summary": "Registering a Dropbox OAuth app is self-serve: create it in the Developer Console, choose scoped access (a dedicated App folder or Full Dropbox), pick permission scopes, register exact redirect URIs, and you get an app key and secret immediately. Every new app carries development status: it links to your own account first, can be opened to at most 500 users, and once the 50th user links, a two-week clock starts - apply for and receive production approval or the app's linking is frozen, and only approval (not unlinking) unfreezes it. Production review checks branding, terms, and least-privilege permissions, and after approval the app's name is locked forever.",
+  "steps": [
+    {
+      "title": "Create the app in the Developer Console",
+      "detail": "Create a new app in the Dropbox Developer Console, selecting scoped access with a content-access level: App folder (a dedicated folder named after the app inside the user's Apps folder, with read/write only there) or Full Dropbox (all files and folders). Registration yields the app key and secret - the client_id and client_secret.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide"
+    },
+    {
+      "title": "Select the least-privilege scopes",
+      "detail": "Scopes are chosen on the app's Permissions tab and saved with Save changes; saved changes do not affect existing access tokens. Dropbox reviews permission breadth at production time and rejects apps whose permissions exceed their implemented functionality - mention planned-but-unimplemented features needing broader scope in the production request.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide"
+    },
+    {
+      "title": "Configure OAuth settings",
+      "detail": "Register the exact redirect URIs under Redirect URIs in the OAuth 2 section of the Settings tab; Dropbox matches the authorization URL's redirect_uri against the registered values at authorization time. The redirect is optional for the code flow (the code can be shown for copy-paste instead), a state parameter is supported, and apps that cannot secure a client_secret should use PKCE - the legacy implicit flow is controlled by the Allow public clients toggle, which is safer off when unused.",
+      "source": "https://developers.dropbox.com/oauth-guide"
+    },
+    {
+      "title": "Work within development status",
+      "detail": "A new app connects only to your own account. To open it to others, find Development users in the App configuration section of the Settings tab and click Enable additional users - the app then functions like a production app but capped at 500 total linked Dropbox users. Demos, hackathons, staging environments and internal tools can stay in development status indefinitely.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide"
+    },
+    {
+      "title": "Mind the 50-user trigger and two-week clock",
+      "detail": "Once the app links 50 Dropbox users, you have two weeks to apply for and receive production status approval; otherwise the app's ability to link additional users is frozen, whatever the count between 0 and 500. For a temporarily frozen app the only way back is applying for and receiving production status - unlinking all users does not unfreeze it.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide"
+    },
+    {
+      "title": "Apply for production status",
+      "detail": "Click Apply for production in the App configuration section of the Settings tab. Add an app icon on the Branding tab first; the application prompts for information such as how the app uses the API, and the request is reviewed against the developer branding guidelines and terms. The request is not reviewed until the app has linked at least 50 users, unless you make a case under Request early review with evidence. After approval, any number of users can link - and the app's name can no longer be changed.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide"
+    }
+  ],
+  "requirements": [
+    "A Dropbox account and a new app in the Developer Console, with a chosen access level (App folder or Full Dropbox)",
+    "Exact redirect URIs to register, or PKCE for clients that cannot hold a secret",
+    "An app icon on the Branding tab before applying for production",
+    "A permissions set that matches the app's actually implemented functionality, with planned broader use disclosed"
+  ],
+  "nuances": [
+    "The two-week clock starts at the 50th linked user, not the 500th: the 500-user cap is the ceiling, but the application deadline arrives much earlier, and missing it freezes new linking at whatever count the app has reached.",
+    "Unlinking every user does not unfreeze a frozen app - production approval is the only way back.",
+    "Production approval locks the app's name permanently, so the branding decision must be final before applying.",
+    "The production review enforces least privilege: permissions broader than the implemented functionality are grounds for rejection, and the fix is disclosure in the application, not trimming ambition.",
+    "Scope changes saved on the Permissions tab do not affect already-issued access tokens - only new authorizations carry the new scopes.",
+    "Pre-built components (Chooser, Saver, Embedder) sidestep the whole approval path: they get per-user, per-action access and do not require production approval."
+  ],
+  "common_blockers": [
+    {
+      "problem": "New users suddenly cannot link the app.",
+      "solution": "The app likely crossed 50 linked users more than two weeks ago without production approval and is frozen. Apply for production status - unlinking users will not restore linking."
+    },
+    {
+      "problem": "The production application was rejected over permissions.",
+      "solution": "Dropbox reviews requested scopes against the app's implemented functionality. Trim scopes to what is built, or resubmit explaining the planned features that require the broader permission."
+    },
+    {
+      "problem": "The OAuth redirect is rejected at authorization time.",
+      "solution": "Dropbox matches redirect_uri exactly against the URIs registered in the app's Settings tab. Register the precise URI, including path and trailing characters, or omit redirect_uri and use the copy-paste code flow."
+    },
+    {
+      "problem": "A public client (mobile or SPA) cannot keep the client_secret safe.",
+      "solution": "Use PKCE: construct a code_verifier at authorization time so no static secret is needed. The legacy implicit flow exists behind the Allow public clients toggle, but Dropbox recommends PKCE for new apps."
+    }
+  ],
+  "uncertainties": [
+    "How long the production-status review takes once it begins; Dropbox documents the two-week developer deadline but no review duration of its own.",
+    "How long early review (before 50 linked users) takes or what evidence suffices; the docs offer the Request early review field without criteria.",
+    "Whether the 500-user development cap or the two-week window has changed recently; the developer guide states both figures but carries no last-updated date.",
+    "Whether an app approved for production can later broaden its scopes without re-review; the docs say requirements apply after approval but do not describe a re-review process."
+  ],
+  "agent_can_do": [
+    "Implement the code flow with exact-match redirect URIs, state, and PKCE where the client cannot hold a secret",
+    "Track the linked-user count and flag the approach of the 50-user trigger and the two-week deadline",
+    "Prepare the production application content: how the app uses the API, least-privilege scope justification, disclosure of planned features",
+    "Watch for scope changes on the Permissions tab and note that existing tokens keep their old scopes"
+  ],
+  "human_must_do": [
+    "Own the Dropbox account and accept the developer branding guidelines and terms",
+    "Choose App folder versus Full Dropbox access and the final scope set",
+    "Set the app's final name and branding before applying - the name is locked after approval",
+    "Submit the production application and own the review correspondence"
+  ],
+  "evidence": [
+    {
+      "claim": "New apps get development status: initially linkable only to the developer's own account, and after clicking Enable additional users they function like production apps but capped at 500 total linked Dropbox users.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Once an app links 50 users, it has two weeks to apply for and receive production approval before its ability to link additional users is frozen; unlinking users does not unfreeze it - only production approval does.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Production applications are submitted from the app's Settings tab (with an icon added on the Branding tab), are not reviewed until the app has at least 50 linked users unless an early-review case is made, and once approved the app's name cannot be changed.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The production review checks least privilege: apps are rejected if their requested permission is broader than their implemented functionality, and planned features needing broader scope should be disclosed in the request.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Scoped access offers two content-access levels: App folder (a dedicated folder in the user's Apps folder) or Full Dropbox (all files and folders), with scopes selected on the Permissions tab and saved changes not affecting existing access tokens.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Pre-built components (Chooser, Saver, Embedder) do not require production approval because they grant only per-user, per-action access rather than direct Dropbox access.",
+      "source": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "OAuth redirect URIs must be registered exactly in the console and are matched at authorization time; the redirect is optional for the code flow, and PKCE is recommended for clients that cannot secure the client_secret, with the legacy implicit flow behind the Allow public clients toggle.",
+      "source": "https://developers.dropbox.com/oauth-guide",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The Dropbox Developer Console (dropbox.com/developers/apps) is reachable as the app-management entry point.",
+      "source": "https://www.dropbox.com/developers/apps",
+      "status": "tested"
+    }
+  ],
+  "generated": false,
+  "last_validated": "2026-11-27"
+}
