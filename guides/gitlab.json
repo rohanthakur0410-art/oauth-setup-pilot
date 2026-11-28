@@ -1,0 +1,149 @@
+{
+  "slug": "gitlab",
+  "app_name": "GitLab",
+  "website": "https://gitlab.com",
+  "developer_console": "https://gitlab.com/-/user_settings/applications",
+  "difficulty": "easy",
+  "difficulty_reason": "One form - name, redirect URI, scopes - with the Application ID and Client Secret issued the moment it is saved. The real choices are the scope set and which documented flow to implement; the tricky parts (one-shot secret, two-hour tokens, refresh rotation) are integration concerns, not setup complexity.",
+  "setup_time": "unknown - saving the application issues credentials immediately and the documentation describes no waiting period, but it states no end-to-end setup timeline",
+  "approval": {
+    "required": false,
+    "requirement": "not-required",
+    "kind": "none",
+    "wait": "none",
+    "wait_basis": "none",
+    "wait_short": "none",
+    "notes": "GitLab's OAuth documentation contains no review or approval step anywhere in the registration flow: any user can create a user-owned application, and saving it immediately yields the Application ID and Client Secret. Group-owned applications need only a group you can manage, and instance-wide applications (GitLab Self-Managed) require administrator access - an access prerequisite, not a review."
+  },
+  "summary": "Registering a GitLab OAuth 2 application is self-serve with no review: create it under your user profile (or a group you manage), give it a redirect URI and scopes, and the Application ID and Client Secret appear the moment you save. GitLab recommends the authorization-code flow with PKCE even for server apps, supports a device grant for browserless devices, and omits the implicit and password flows entirely. The operational defaults matter more than the setup: access tokens expire after two hours, every refresh invalidates the previous access-and-refresh pair, and the client secret is shown only once because GitLab stores it hashed - lose it and you must renew it, which breaks the app until the new secret is deployed.",
+  "steps": [
+    {
+      "title": "Create the application",
+      "detail": "In the upper-right corner select your avatar, then Edit profile, then Access > Applications, and Add new application. Enter a Name and Redirect URI, pick the OAuth 2 scopes, and Save application. GitLab immediately provides the client ID in the Application ID field and the client secret via Copy in the Secret field. For a group-owned app, go to the group's Settings > Applications instead; the flow is the same.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/"
+    },
+    {
+      "title": "Choose the least-privilege scope set",
+      "detail": "Scopes are fixed at registration and shown to the user on the authorization screen. The documented table runs from read-only (read_user, read_api, read_repository) to full API access (api), plus the OpenID Connect scopes (openid, profile, email) needed for sign-in and the /oauth/userinfo endpoint.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/"
+    },
+    {
+      "title": "Pick a flow",
+      "detail": "GitLab supports authorization code with PKCE - which it recommends for both client and server apps, since PKCE lets public clients complete the exchange without the client secret at all - plain authorization code for secure server-side apps, and the device authorization grant (GitLab 17.1 and later) for devices without a browser. In line with the OAuth 2.1 draft, the implicit and resource-owner-password flows are omitted.",
+      "source": "https://docs.gitlab.com/api/oauth2/"
+    },
+    {
+      "title": "Wire the endpoints",
+      "detail": "Authorization at https://gitlab.com/oauth/authorize, token exchange at /oauth/token, user information at /oauth/userinfo (requires the openid scope), and an OIDC discovery document at /.well-known/openid-configuration. Send client_id and client_secret either as request parameters or in an Authorization: Basic header, never both - both returns 400 Bad Request.",
+      "source": "https://docs.gitlab.com/api/oauth2/"
+    },
+    {
+      "title": "Plan for token expiry and rotation",
+      "detail": "Access tokens expire after two hours by default. Refresh with grant_type=refresh_token; refresh tokens remain usable after the access token expires, but each refresh invalidates the existing access and refresh tokens and returns new ones, so the client must persist the newest pair.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/"
+    },
+    {
+      "title": "Guard the client secret",
+      "detail": "GitLab stores OAuth application secrets hashed, so the secret is available only immediately after creation. If it is lost, use Renew secret: renewing generates a new secret and prevents the existing application from functioning until its credentials are updated.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/"
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "GitLab OAuth 2 applications come in three ownership types - user-owned (Edit profile > Access > Applications), group-owned (group Settings > Applications), and instance-wide (admin area, GitLab Self-Managed) - differing only by permission level.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Saving a new application immediately yields the OAuth 2 Client ID (Application ID field) and Client Secret (Secret field), with no review step in the documented flow.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "GitLab supports authorization code with PKCE (recommended for both client and server apps), plain authorization code, and the device authorization grant (GitLab 17.1 and later); the implicit and resource-owner-password flows are omitted in line with the OAuth 2.1 draft.",
+      "source": "https://docs.gitlab.com/api/oauth2/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "By default, access tokens expire after two hours (7200 seconds); on GitLab Self-Managed and GitLab Dedicated, administrators can configure the maximum token lifetime.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Refreshing a token invalidates the existing access and refresh tokens and returns a new pair; the redirect_uri must match the one used in the original authorization request.",
+      "source": "https://docs.gitlab.com/api/oauth2/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "OAuth application secrets are stored hashed by default and are available only immediately after creation; Renew secret generates a new secret and prevents the existing application from functioning until credentials are updated.",
+      "source": "https://docs.gitlab.com/integration/oauth_provider/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "Sending client_id and client_secret both as request parameters and in an Authorization: Basic header returns 400 Bad Request; one location only.",
+      "source": "https://docs.gitlab.com/api/oauth2/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "GitLab requires HTTPS redirect URIs in production but allows insecure HTTP redirect URIs for development.",
+      "source": "https://docs.gitlab.com/api/oauth2/",
+      "status": "docs-supported"
+    },
+    {
+      "claim": "The user applications console on gitlab.com is login-gated: an unauthenticated request to https://gitlab.com/-/user_settings/applications redirects to sign-in (observed 2026-11-28).",
+      "source": "https://gitlab.com/-/user_settings/applications",
+      "status": "tested"
+    }
+  ],
+  "requirements": [
+    "A GitLab account - any user can create a user-owned application; a group you manage for a group-owned one; administrator access on GitLab Self-Managed for an instance-wide one",
+    "A redirect URI (HTTPS in production; HTTP is allowed for development)",
+    "A decision on the scope set, presented to users at authorization time",
+    "PKCE support in the client (GitLab recommends it for both client-side and server apps); a securely stored client secret for the classic code flow"
+  ],
+  "human_must_do": [
+    "Create the application while logged in (the console is login-gated) and copy the secret at creation - it is stored hashed and shown only once",
+    "Choose the scope set and the ownership level (user, group, or instance)",
+    "Deploy the renewed secret promptly if you ever renew it - renewing breaks the existing application until credentials are updated"
+  ],
+  "agent_can_do": [
+    "Implement the authorization-code-with-PKCE flow against the documented endpoints, including the OIDC discovery document",
+    "Build the refresh path with rotation handling: persist the newest access/refresh pair because every refresh invalidates the previous one",
+    "Draft the registration values (name, redirect URIs, scope list) for the human to enter",
+    "Diagnose token-exchange failures such as the 400 from sending the secret in both the body and a Basic header"
+  ],
+  "common_blockers": [
+    {
+      "problem": "The client secret was never saved and the creation screen is gone.",
+      "solution": "GitLab stores secrets hashed and shows them only immediately after creation. Use Renew secret on the application, then update the client - renewing prevents the existing application from functioning until the new credentials are in place."
+    },
+    {
+      "problem": "Token exchange fails with 400 Bad Request.",
+      "solution": "The client is sending client_id/client_secret both as request parameters and in an Authorization: Basic header. GitLab accepts either location but not both; pick one."
+    },
+    {
+      "problem": "A refresh worked once, then the stored tokens stopped working.",
+      "solution": "Every refresh invalidates the previous access and refresh tokens. If the client refreshed but kept (or raced) the old pair, those tokens are dead - persist the newest pair atomically and serialize concurrent refreshes."
+    },
+    {
+      "problem": "The authorization request rejects the redirect URI.",
+      "solution": "The redirect_uri must exactly match a registered value, and GitLab requires HTTPS in production - insecure HTTP redirect URIs are allowed only for development."
+    }
+  ],
+  "nuances": [
+    "PKCE is GitLab's recommended flow for both client and server applications, not just mobile and SPAs - it lets the exchange complete without the client secret at all.",
+    "Refresh tokens rotate: each refresh response carries a new refresh token and kills the old one, so a client that refreshes on two devices or threads will invalidate itself.",
+    "The secret's one-shot display is a storage property, not a UI quirk: secrets are hashed in the database, and Renew secret is the only way back - at the cost of breaking the app until the new secret is deployed.",
+    "Instance-wide applications exist only on GitLab Self-Managed (and Dedicated), need administrator access, and can be marked trusted, which silently skips the user authorization screen - powerful and easy to overlook.",
+    "Deleting an application deletes all grants and tokens associated with it, so recreating an app under the same name does not restore user authorizations.",
+    "The two-hour token lifetime is a default, not a constant: Self-Managed and Dedicated administrators can configure it, so an integration must not hardcode expiry assumptions.",
+    "The device authorization grant (GitLab 17.1 and later) covers CLI tools and devices without browsers - a secondary device completes the authorization, no redirect URI needed."
+  ],
+  "uncertainties": [
+    "GitLab publishes no explicit statement that OAuth applications need no approval; this conclusion comes from the complete absence of any review step in the official registration documentation.",
+    "The cited pages document no listing or distribution review for third-party integrations on gitlab.com; if GitLab runs such a program, its requirements are outside the cited documentation.",
+    "Behavior on self-managed instances can diverge from gitlab.com (for example, token lifetime is administrator-configurable), and the cited pages cover both offerings; instance-specific behavior was not tested."
+  ],
+  "generated": false,
+  "last_validated": "2026-11-28"
+}
